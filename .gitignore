@@ -1,0 +1,22 @@
+# Virtual environment (venv)
+.venv/
+
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Installer logs and pip cache
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Environment variables and secrets
+.env
+
+# macOS files
+.DS_Store
+
+# Windows files
+Thumbs.db
