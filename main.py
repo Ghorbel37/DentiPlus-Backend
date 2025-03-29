@@ -7,7 +7,7 @@ from dependencies.database import engine
 from dependencies.get_db import get_db
 import models
 import schemas
-from services import diagnose_patient_en,diagnose_patient_fr
+from services.llm import diagnose_patient_en,diagnose_patient_fr
 
 
 # Enable SQLAlchemy logging: Shows SQL queries
