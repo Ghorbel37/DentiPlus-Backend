@@ -88,13 +88,13 @@ def diagnose_fr(request: schemas.SymptomRequest):
     return diagnose_patient_fr(request.symptoms, request.additional_details)
 
 @app.get("/get-value")
-async def get_value():
+async def get_value_blockchain():
     return get_value()
 
 @app.post("/set-value/{new_value}")
-def set_value(new_value: int):
+def set_value_blockchain(new_value: int):
     return set_value(new_value)
 
 @app.get("/accounts")
-async def get_accounts():
+async def get_accounts_blockchain():
     get_accounts()
