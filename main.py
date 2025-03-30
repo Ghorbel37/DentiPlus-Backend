@@ -91,7 +91,7 @@ def diagnose_fr(request: schemas.SymptomRequest):
 async def get_value():
     return get_value()
 
-@app.post("/set_value/{new_value}")
+@app.post("/set-value/{new_value}")
 def set_value(new_value: int):
     return set_value(new_value)
 
