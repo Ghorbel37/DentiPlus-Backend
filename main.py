@@ -8,7 +8,7 @@ from dependencies.get_db import get_db
 import models
 import schemas
 from services.llm import diagnose_patient_en,diagnose_patient_fr
-
+from services.blockchain import get_value, set_value, get_accounts
 
 # Enable SQLAlchemy logging: Shows SQL queries
 #
@@ -86,3 +86,15 @@ def diagnose_en(request: schemas.SymptomRequest):
 @app.post("/diagnose-fr")
 def diagnose_fr(request: schemas.SymptomRequest):
     return diagnose_patient_fr(request.symptoms, request.additional_details)
+
+@app.get("/get-value")
+async def get_value():
+    return get_value()
+
+@app.post("/set_value/{new_value}")
+def set_value(new_value: int):
+    return set_value(new_value)
+
+@app.get("/accounts")
+async def get_accounts():
+    get_accounts()
