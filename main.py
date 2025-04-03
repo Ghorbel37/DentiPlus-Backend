@@ -9,6 +9,10 @@ import models
 import schemas
 from services.llm import diagnose_patient_en,diagnose_patient_fr
 from services.blockchain import get_value, set_value, get_accounts
+import jwt
+import bcrypt
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+
 
 # Enable SQLAlchemy logging: Shows SQL queries
 #
@@ -19,7 +23,11 @@ from services.blockchain import get_value, set_value, get_accounts
 # Create database tables
 models.Base.metadata.create_all(bind=engine)
 
-app = FastAPI()
+app = FastAPI(
+    title="FastAPI Backend",
+    description="Backend that manages DB, LLM and Blockchain.",
+    version="1.0.0"
+)
 
 app.add_middleware(
     CORSMiddleware,
