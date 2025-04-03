@@ -1,7 +1,7 @@
 # controllers/auth_controller.py
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from dependencies.auth import authenticate_user, create_access_token,get_current_active_user, User, Token, fake_users_db
+from dependencies.auth import RoleChecker, authenticate_user, create_access_token,get_current_active_user, User, Token, fake_users_db
 from dependencies.env import ACCESS_TOKEN_EXPIRE_MINUTES
 from datetime import timedelta
 
@@ -25,3 +25,11 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
 @router.get("/users/me")
 async def read_users_me(current_user: User = Depends(get_current_active_user)):
     return current_user
+
+@router.get("/admin/data", dependencies=[Depends(RoleChecker(allowed_roles=["doctor"]))])
+async def admin_data():
+    return {"message": "This is admin-only data"}
+
+@router.get("/user/data", dependencies=[Depends(RoleChecker(allowed_roles=["doctor", "patient"]))])
+async def user_data():
+    return {"message": "This is user or admin accessible data"}
