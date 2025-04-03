@@ -26,8 +26,8 @@ BCRYPT_SALT_ROUNDS = int(os.getenv("BCRYPT_SALT_ROUNDS", "12"))
 
 # Allowed roles (for role-based access control)
 ROLES = {
-    "ADMIN": os.getenv("ROLE_ADMIN", "admin"),
-    "USER": os.getenv("ROLE_USER", "user")
+    "DOCTOR": os.getenv("ROLE_DOCTOR", "doctor"),
+    "PATIENT": os.getenv("ROLE_PATIENT", "patient")
 }
 
 # Function to get environment variables with optional default values

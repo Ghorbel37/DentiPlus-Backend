@@ -27,13 +27,13 @@ class Token(BaseModel):
 fake_users_db = {
     "johndoe": {
         "username": "johndoe",
-        "role": "admin",
+        "role": "doctor",
         "hashed_password": bcrypt.hashpw(b"adminpass", bcrypt.gensalt(BCRYPT_SALT_ROUNDS)).decode(),
         "disabled": False,
     },
     "alice": {
         "username": "alice",
-        "role": "user",
+        "role": "patient",
         "hashed_password": bcrypt.hashpw(b"userpass", bcrypt.gensalt(BCRYPT_SALT_ROUNDS)).decode(),
         "disabled": False,
     }
