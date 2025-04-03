@@ -13,3 +13,7 @@ CONTRACT_ADDRESS = os.getenv("CONTRACT_ADDRESS")
 # Public address
 ACCOUNT = os.getenv("ACCOUNT")
 PRIVATE_KEY = os.getenv("PRIVATE_KEY")
+
+# Function to get environment variables with optional default values
+def get_env_var(name: str, default: str = None) -> str:
+    return os.getenv(name, default)
