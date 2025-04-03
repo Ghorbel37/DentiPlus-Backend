@@ -6,3 +6,5 @@ dotenv
 requests
 web3
 fastapi[standard]
+bcrypt
+pyjwt
