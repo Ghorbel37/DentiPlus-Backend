@@ -37,7 +37,6 @@ class User(Base):
     # Relationships
     doctors = relationship("Doctor", back_populates="user", cascade="all, delete-orphan")
     patients = relationship("Patient", back_populates="user", cascade="all, delete-orphan")
-    symptomes = relationship("Symptomes", back_populates="user", cascade="all, delete-orphan")
 
 class Doctor(Base):
     __tablename__ = "doctors"
@@ -120,5 +119,4 @@ class Symptomes(Base):
     consultation_id = Column(Integer, ForeignKey('consultations.id'), nullable=False)  # New field
 
     # Relationships
-    user = relationship("User", back_populates="symptomes")
     consultation = relationship("Consultation", back_populates="symptomes")
