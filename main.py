@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from controllers import user_controller
 from dependencies.database import engine
 import models
 from controllers.patient_controller import router as patient_router
@@ -37,3 +38,4 @@ app.include_router(diagnosis_router, prefix="/diagnoses", tags=["Diagnoses"])
 app.include_router(blockchain_router, prefix="/blockchain", tags=["Blockchain"])
 app.include_router(llm_router, prefix="/llm", tags=["LLM"])
 app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
+app.include_router(user_controller.router)
