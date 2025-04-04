@@ -1,20 +1,7 @@
-"""Contains pydantic schemas for validation"""
-from typing import List, Optional
-from datetime import date,datetime
+from datetime import datetime
+from typing import Optional
 from pydantic import BaseModel
-
-
-class PatientBase(BaseModel):
-    name: str
-    birthdate: Optional[date] = None
-
-class PatientCreate(PatientBase):
-    pass
-
-class Patient(PatientBase):
-    id: int
-    class Config:
-        from_attributes = True
+from typing import List
 
 class DiagnosisBase(BaseModel):
     condition1: str

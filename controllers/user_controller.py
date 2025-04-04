@@ -4,13 +4,14 @@ from dependencies.get_db import get_db
 from dependencies.auth import create_access_token, User as AuthUser, Token, bcrypt, BCRYPT_SALT_ROUNDS, ACCESS_TOKEN_EXPIRE_MINUTES, get_current_active_user
 from datetime import timedelta
 import models
-import schemas
+from schemas.patient import Patient, PatientAccountCreate
+from schemas.user import Doctor, DoctorAccountCreate, User, UserCreate, RoleUser
 
 router = APIRouter(prefix="/users", tags=["users"])
 
 # Create a Patient account
-@router.post("/patients/", response_model=schemas.Patient)
-def create_patient(patient: schemas.PatientAccountCreate, db: Session = Depends(get_db)):
+@router.post("/patients/", response_model=Patient)
+def create_patient(patient: PatientAccountCreate, db: Session = Depends(get_db)):
     # Check if username already exists
     if db.query(models.User).filter(models.User.email == patient.email).first():
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -59,8 +60,8 @@ def create_patient(patient: schemas.PatientAccountCreate, db: Session = Depends(
     return response_data
 
 # Create a Doctor account
-@router.post("/doctors/", response_model=schemas.Doctor)
-def create_doctor(doctor: schemas.DoctorAccountCreate, db: Session = Depends(get_db)):
+@router.post("/doctors/", response_model=Doctor)
+def create_doctor(doctor: DoctorAccountCreate, db: Session = Depends(get_db)):
     # Check if username already exists
     if db.query(models.User).filter(models.User.email == doctor.email).first():
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -102,7 +103,7 @@ def create_doctor(doctor: schemas.DoctorAccountCreate, db: Session = Depends(get
 
 # Optional: Create account and return token (combines creation with login)
 @router.post("/accounts/token", response_model=Token)
-def create_account_with_token(user: schemas.UserCreate, db: Session = Depends(get_db)):
+def create_account_with_token(user: UserCreate, db: Session = Depends(get_db)):
     # Check if username already exists
     if db.query(models.User).filter(models.User.email == user.email).first():
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -125,11 +126,11 @@ def create_account_with_token(user: schemas.UserCreate, db: Session = Depends(ge
     db.refresh(db_user)
 
     # Create Patient or Doctor based on role
-    if user.role == schemas.RoleUser.PATIENT:
+    if user.role == RoleUser.PATIENT:
         db_patient = models.Patient(user_id=db_user.id)
         db.add(db_patient)
         db.commit()
-    elif user.role == schemas.RoleUser.DOCTOR:
+    elif user.role == RoleUser.DOCTOR:
         db_doctor = models.Doctor(user_id=db_user.id)
         db.add(db_doctor)
         db.commit()
@@ -146,7 +147,7 @@ def create_account_with_token(user: schemas.UserCreate, db: Session = Depends(ge
     return {"access_token": access_token, "token_type": "bearer"}
 
 # Get current user (for testing, reusing your auth dependency)
-@router.get("/me", response_model=schemas.User)
+@router.get("/me", response_model=User)
 def read_users_me(current_user: AuthUser = Depends(get_current_active_user), db: Session = Depends(get_db)):
     db_user = db.query(models.User).filter(models.User.email == current_user.email).first()
     if not db_user:
