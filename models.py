@@ -20,13 +20,6 @@ class EtatAppointment(enum.Enum):
     PAYE = "PAYE"
     NON_PAYE = "NON_PAYE"
 
-# Association table for many-to-many relationship between Consultation and Symptomes
-consultation_symptomes = Table(
-    'consultation_symptomes', Base.metadata,
-    Column('consultation_id', Integer, ForeignKey('consultations.id'), primary_key=True),
-    Column('symptome_id', Integer, ForeignKey('symptomes.id'), primary_key=True),
-    mysql_engine="InnoDB"
-)
 
 class User(Base):
     __tablename__ = "users"
@@ -90,7 +83,7 @@ class Consultation(Base):
     patient = relationship("Patient", back_populates="consultations", foreign_keys=[patient_id])
     appointment = relationship("Appointment", back_populates="consultation", uselist=False, cascade="all, delete-orphan")
     hypotheses = relationship("Hypothese", back_populates="consultation", cascade="all, delete-orphan")
-    symptomes = relationship("Symptomes", secondary=consultation_symptomes, back_populates="consultations")
+    symptomes = relationship("Symptomes", back_populates="consultation", cascade="all, delete-orphan")
 
 class Appointment(Base):
     __tablename__ = "appointments"
@@ -124,7 +117,8 @@ class Symptomes(Base):
     id = Column(Integer, primary_key=True, index=True)
     symptome = Column(String(255), nullable=False)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    consultation_id = Column(Integer, ForeignKey('consultations.id'), nullable=False)  # New field
 
     # Relationships
     user = relationship("User", back_populates="symptomes")
-    consultations = relationship("Consultation", secondary=consultation_symptomes, back_populates="symptomes")
+    consultation = relationship("Consultation", back_populates="symptomes")
