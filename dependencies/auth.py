@@ -7,12 +7,15 @@ from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime, timedelta
 from dependencies.env import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, TOKEN_URL, BCRYPT_SALT_ROUNDS
+from sqlalchemy.orm import Session
+from dependencies.get_db import get_db
+import models
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=TOKEN_URL)
 
 # Pydantic models
 class User(BaseModel):
-    username: str
+    email: str
     role: str
     disabled: Optional[bool] = False
 
@@ -23,34 +26,25 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
-# Dummy database (replace with real DB in production)
-fake_users_db = {
-    "johndoe": {
-        "username": "johndoe",
-        "role": "doctor",
-        "hashed_password": bcrypt.hashpw(b"adminpass", bcrypt.gensalt(BCRYPT_SALT_ROUNDS)).decode(),
-        "disabled": False,
-    },
-    "alice": {
-        "username": "alice",
-        "role": "patient",
-        "hashed_password": bcrypt.hashpw(b"userpass", bcrypt.gensalt(BCRYPT_SALT_ROUNDS)).decode(),
-        "disabled": False,
-    }
-}
+
 
 # Utility functions
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return bcrypt.checkpw(plain_password.encode(), hashed_password.encode())
 
-def get_user(db, username: str) -> Optional[UserInDB]:
-    if username in db:
-        user_dict = db[username]
-        return UserInDB(**user_dict)
+def get_user(db: Session, email: str) -> Optional[UserInDB]:
+    user = db.query(models.User).filter(models.User.email == email).first()
+    if user:
+        return UserInDB(
+            email=user.email,
+            role=user.role.value,
+            hashed_password=user.password,
+            disabled=False  # Add a disabled field to models.User if needed
+        )
     return None
 
-def authenticate_user(db, username: str, password: str) -> Optional[UserInDB]:
-    user = get_user(db, username)
+def authenticate_user(db: Session, email: str, password: str) -> Optional[UserInDB]:
+    user = get_user(db, email)
     if not user or not verify_password(password, user.hashed_password):
         return None
     return user
@@ -62,7 +56,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
+async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -70,12 +64,12 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
     )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
+        email: str = payload.get("sub")
+        if email is None:
             raise credentials_exception
     except jwt.PyJWTError:
         raise credentials_exception
-    user = get_user(fake_users_db, username)
+    user = get_user(db, email)
     if user is None or user.disabled:
         raise credentials_exception
     return user
