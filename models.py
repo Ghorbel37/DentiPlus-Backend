@@ -1,6 +1,6 @@
 """Contains SQLAlchemy database models inheriting from Base
 Can be used to generate database"""
-from sqlalchemy import Column, Integer, String, Float, Date, TIMESTAMP, ForeignKey, Enum, Table
+from sqlalchemy import Column, Integer, String, Float, Date, TIMESTAMP, ForeignKey, Enum, Table, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from dependencies.database import Base  # Adjust if needed
@@ -70,7 +70,7 @@ class Consultation(Base):
     id = Column(Integer, primary_key=True, index=True)
     date = Column(TIMESTAMP, server_default=func.now(), nullable=False)
     diagnostique = Column(String(255), nullable=True)
-    doctorNote = Column(String(255), nullable=True)
+    chat_summary = Column(Text, nullable=True)
     etat = Column(Enum(EtatConsultation), nullable=False)
     fraisAdministratives = Column(Float, nullable=True)
     prix = Column(Float, nullable=True)
@@ -83,6 +83,7 @@ class Consultation(Base):
     appointment = relationship("Appointment", back_populates="consultation", uselist=False, cascade="all, delete-orphan")
     hypotheses = relationship("Hypothese", back_populates="consultation", cascade="all, delete-orphan")
     symptomes = relationship("Symptomes", back_populates="consultation", cascade="all, delete-orphan")
+    chat_messages = relationship("ChatMessage", back_populates="consultation",cascade="all, delete-orphan",order_by="ChatMessage.timestamp")
 
 class Appointment(Base):
     __tablename__ = "appointments"
@@ -120,3 +121,22 @@ class Symptomes(Base):
 
     # Relationships
     consultation = relationship("Consultation", back_populates="symptomes")
+
+class MessageSenderType(enum.Enum):
+    SYSTEM = "SYSTEM"
+    USER = "USER"
+    ASSISTANT = "ASSISTANT"
+    DOCTOR = "DOCTOR"  # For future use if doctors join chats
+
+class ChatMessage(Base):
+    __tablename__ = "chat_messages"
+    __table_args__ = {"mysql_engine": "InnoDB"}
+    
+    id = Column(Integer, primary_key=True, index=True)
+    consultation_id = Column(Integer, ForeignKey('consultations.id'), nullable=False)
+    content = Column(Text, nullable=False)  # Using Text instead of String for longer messages
+    sender_type = Column(Enum(MessageSenderType), nullable=False)
+    timestamp = Column(TIMESTAMP, server_default=func.now(), nullable=False)
+    
+    # Relationship
+    consultation = relationship("Consultation", back_populates="chat_messages")
