@@ -3,30 +3,15 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 import jwt
 import bcrypt
-from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime, timedelta
 from dependencies.env import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, TOKEN_URL, BCRYPT_SALT_ROUNDS
 from sqlalchemy.orm import Session
 from dependencies.get_db import get_db
 import models
+from schemas.auth import UserInDB, User
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=TOKEN_URL)
-
-# Pydantic models
-class User(BaseModel):
-    email: str
-    role: str
-    disabled: Optional[bool] = False
-
-class UserInDB(User):
-    hashed_password: str
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-
 
 # Utility functions
 def verify_password(plain_password: str, hashed_password: str) -> bool:
