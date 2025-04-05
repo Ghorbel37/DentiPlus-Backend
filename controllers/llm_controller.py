@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from services.llm import diagnose_patient_en, diagnose_patient_fr
-from schemas.diagnosis import SymptomRequest
+from schemas.diagnosis_schemas import SymptomRequest
 
 router = APIRouter()
 

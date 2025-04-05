@@ -9,7 +9,7 @@ from dependencies.env import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES,
 from sqlalchemy.orm import Session
 from dependencies.get_db import get_db
 import models
-from schemas.auth import UserInDB, User
+from schemas.auth_schemas import UserInDB, User
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=TOKEN_URL)
 

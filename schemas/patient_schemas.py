@@ -1,7 +1,7 @@
 from datetime import date
 from typing import Optional
 from pydantic import BaseModel
-from .user import RoleUser, User, UserCreate
+from .user_schemas import RoleUser, User, UserCreate
 
 class PatientBase(BaseModel):
     name: str
