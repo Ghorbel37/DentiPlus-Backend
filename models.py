@@ -44,6 +44,8 @@ class Doctor(Base):
     __table_args__ = {"mysql_engine": "InnoDB"}
     
     id = Column(Integer, primary_key=True, index=True)
+    description = Column(Text, nullable=True)
+    rating = Column(Float, default=0.0)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
 
     # Relationship
