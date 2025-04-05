@@ -17,8 +17,9 @@ class EtatConsultation(enum.Enum):
     RECONSULTATION = "RECONSULTATION"
 
 class EtatAppointment(enum.Enum):
-    PAYE = "PAYE"
-    NON_PAYE = "NON_PAYE"
+    PLANIFIE = "PLANIFIE"
+    COMPLETE = "COMPLETE"
+    ANNULE = "ANNULE"
 
 
 class User(Base):
