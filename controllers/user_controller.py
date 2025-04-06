@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from dependencies.get_db import get_db
-from dependencies.auth import create_access_token, User as AuthUser, Token, bcrypt, BCRYPT_SALT_ROUNDS, ACCESS_TOKEN_EXPIRE_MINUTES, get_current_active_user
+from dependencies.auth import create_access_token, User as AuthUser, bcrypt, BCRYPT_SALT_ROUNDS, ACCESS_TOKEN_EXPIRE_MINUTES, get_current_active_user
 from datetime import timedelta
 import models
 from schemas.patient_schemas import Patient, PatientAccountCreate
 from schemas.user_schemas import Doctor, DoctorAccountCreate, User, UserCreate, RoleUser
+from schemas.auth_schemas import Token
 
 router = APIRouter(prefix="/users", tags=["users"])
 
