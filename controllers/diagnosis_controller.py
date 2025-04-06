@@ -4,7 +4,7 @@ from dependencies.get_db import get_db
 from schemas.diagnosis_schemas import (ConsultationResponse, ConsultationCreate, ChatMessageResponse,
                           ConversationHistoryCreate, EtatConsultation, MessageSenderType)
 from models import Consultation, ChatMessage, Hypothese, Symptomes, Patient, Doctor
-import services.llm as llm_service  # Hypothetical LLM service
+import services.llm_service as llm_service  # Hypothetical LLM service
 
 router = APIRouter(prefix="/diagnostics", tags=["diagnostics"])
 

@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from services.blockchain import get_value, set_value, get_accounts
+from services.blockchain_service import get_value, set_value, get_accounts
 
 router = APIRouter()
 
