@@ -1,28 +1,119 @@
-from datetime import datetime
-from typing import Optional
 from pydantic import BaseModel
-from typing import List
+from typing import Optional, List
+from datetime import datetime
+from enum import Enum
 
-class DiagnosisBase(BaseModel):
-    condition1: str
-    confidence1: int
-    condition2: str
-    confidence2: int
-    condition3: str
-    confidence3: int
-    doctorDiagnosis: Optional[str] = None
-    patientId: int
+# Enums
+class RoleUser(str, Enum):
+    DOCTOR = "DOCTOR"
+    PATIENT = "PATIENT"
 
-class DiagnosisCreate(DiagnosisBase):
-    pass
+class EtatConsultation(str, Enum):
+    VALIDE = "VALIDE"
+    EN_ATTENTE = "EN_ATTENTE"
+    RECONSULTATION = "RECONSULTATION"
 
-class Diagnosis(DiagnosisBase):
+class EtatAppointment(str, Enum):
+    PLANIFIE = "PLANIFIE"
+    COMPLETE = "COMPLETE"
+    ANNULE = "ANNULE"
+
+class MessageSenderType(str, Enum):
+    SYSTEM = "SYSTEM"
+    USER = "USER"
+    ASSISTANT = "ASSISTANT"
+    DOCTOR = "DOCTOR"
+
+# Base Schemas
+class UserBase(BaseModel):
+    adress: Optional[str] = None
+    birthdate: Optional[datetime] = None
+    email: str
+    name: str
+    phoneNumber: Optional[str] = None
+    role: RoleUser
+
+class DoctorBase(BaseModel):
+    description: Optional[str] = None
+    rating: Optional[float] = 0.0
+
+class PatientBase(BaseModel):
+    calories: Optional[int] = None
+    frequenceCardiaque: Optional[int] = None
+    poids: Optional[int] = None
+
+class ChatMessageBase(BaseModel):
+    content: str
+    sender_type: MessageSenderType
+    timestamp: Optional[datetime] = None
+
+class HypotheseBase(BaseModel):
+    condition: str
+    confidence: int
+
+class SymptomeBase(BaseModel):
+    symptome: str
+
+# Response Schemas
+class UserResponse(UserBase):
     id: int
-    date: datetime
-
     class Config:
         from_attributes = True
 
-class SymptomRequest(BaseModel):
-    symptoms: List[str]
-    additional_details: str = "None"
+class DoctorResponse(DoctorBase):
+    id: int
+    user: UserResponse
+    class Config:
+        from_attributes = True
+
+class PatientResponse(PatientBase):
+    id: int
+    user: UserResponse
+    class Config:
+        from_attributes = True
+
+class ChatMessageResponse(ChatMessageBase):
+    id: int
+    consultation_id: int
+    class Config:
+        from_attributes = True
+
+class HypotheseResponse(HypotheseBase):
+    id: int
+    consultation_id: int
+    class Config:
+        from_attributes = True
+
+class SymptomeResponse(SymptomeBase):
+    id: int
+    consultation_id: int
+    class Config:
+        from_attributes = True
+
+class ConsultationBase(BaseModel):
+    date: Optional[datetime] = None
+    diagnostique: Optional[str] = None
+    chat_summary: Optional[str] = None
+    etat: EtatConsultation
+    fraisAdministratives: Optional[float] = None
+    prix: Optional[float] = None
+
+class ConsultationResponse(ConsultationBase):
+    id: int
+    doctor: DoctorResponse
+    patient: PatientResponse
+    chat_messages: List[ChatMessageResponse] = []
+    hypotheses: List[HypotheseResponse] = []
+    symptomes: List[SymptomeResponse] = []
+    class Config:
+        from_attributes = True
+
+class ConsultationCreate(BaseModel):
+    patient_id: int
+    doctor_id: int
+    etat: EtatConsultation = EtatConsultation.EN_ATTENTE
+
+class ConversationHistoryCreate(BaseModel):
+    consultation_id: int
+    content: str
+    sender_type: MessageSenderType

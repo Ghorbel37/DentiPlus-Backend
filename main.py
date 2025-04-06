@@ -34,8 +34,9 @@ app.add_middleware(
 
 # Include routers from controllers
 app.include_router(patient_router, prefix="/patients", tags=["Patients"])
-app.include_router(diagnosis_router, prefix="/diagnoses", tags=["Diagnoses"])
+# app.include_router(diagnosis_router, prefix="/diagnoses", tags=["Diagnoses"])
 app.include_router(blockchain_router, prefix="/blockchain", tags=["Blockchain"])
 app.include_router(llm_router, prefix="/llm", tags=["LLM"])
 app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
 app.include_router(user_controller.router)
+app.include_router(diagnosis_router)
