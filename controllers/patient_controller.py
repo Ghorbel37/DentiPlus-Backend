@@ -4,7 +4,7 @@ from dependencies.get_db import get_db
 from dependencies.env import BCRYPT_SALT_ROUNDS
 from dependencies.auth import bcrypt
 import models
-from schemas.patient_schemas import Patient, PatientCreate
+from schemas.patient_schemas import Patient, PatientCreate, PatientUpdate
 from models import RoleUser
 
 router = APIRouter(prefix="/patients", tags=["Patients"])
@@ -98,3 +98,52 @@ def get_patients_by_name(name: str, db: Session = Depends(get_db)):
         "frequenceCardiaque": patient.frequenceCardiaque,
         "poids": patient.poids
     } for patient in patients]
+
+@router.put("/{patient_id}", response_model=Patient)
+def update_patient(patient_id: int, patient_update: PatientUpdate, db: Session = Depends(get_db)):
+    db_patient = db.query(models.Patient).filter(models.Patient.id == patient_id).first()
+    if db_patient is None:
+        raise HTTPException(status_code=404, detail="Patient not found")
+    
+    db_user = db_patient.user
+    
+    # Update User fields if provided
+    if patient_update.email is not None:
+        # Check if new email is already taken by another user
+        if db.query(models.User).filter(models.User.email == patient_update.email, models.User.id != db_user.id).first():
+            raise HTTPException(status_code=400, detail="Email already registered")
+        db_user.email = patient_update.email
+    if patient_update.name is not None:
+        db_user.name = patient_update.name
+    if patient_update.adress is not None:
+        db_user.adress = patient_update.adress
+    if patient_update.birthdate is not None:
+        db_user.birthdate = patient_update.birthdate
+    if patient_update.phoneNumber is not None:
+        db_user.phoneNumber = patient_update.phoneNumber
+    
+    # Update Patient fields if provided
+    if patient_update.calories is not None:
+        db_patient.calories = patient_update.calories
+    if patient_update.frequenceCardiaque is not None:
+        db_patient.frequenceCardiaque = patient_update.frequenceCardiaque
+    if patient_update.poids is not None:
+        db_patient.poids = patient_update.poids
+
+    db.commit()
+    db.refresh(db_user)
+    db.refresh(db_patient)
+
+    return {
+        "id": db_patient.id,
+        "user_id": db_user.id,
+        "email": db_user.email,
+        "name": db_user.name,
+        "role": db_user.role,
+        "adress": db_user.adress,
+        "birthdate": db_user.birthdate,
+        "phoneNumber": db_user.phoneNumber,
+        "calories": db_patient.calories,
+        "frequenceCardiaque": db_patient.frequenceCardiaque,
+        "poids": db_patient.poids
+    }

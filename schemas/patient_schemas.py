@@ -23,6 +23,19 @@ class PatientCreate(PatientCreateBase):
     class Config:
         from_attributes = True
 
+class PatientUpdate(BaseModel):
+    email: Optional[str] = None
+    name: Optional[str] = None
+    adress: Optional[str] = None
+    birthdate: Optional[date] = None
+    phoneNumber: Optional[str] = None
+    calories: Optional[int] = None
+    frequenceCardiaque: Optional[int] = None
+    poids: Optional[int] = None
+
+    class Config:
+        from_attributes = True
+
 class Patient(PatientBase):
     id: int
     user_id: int
