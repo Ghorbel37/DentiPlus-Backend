@@ -14,6 +14,10 @@ class UserCreate(UserBase):
     birthdate: Optional[date] = None
     phoneNumber: Optional[str] = None
 
+class UserUpdatePassword(BaseModel):
+    current_password: str
+    new_password: str
+
 class UserListElement(UserBase):
     id: int
     
