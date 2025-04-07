@@ -22,6 +22,18 @@ class DoctorCreate(DoctorCreateBase):
     class Config:
         from_attributes = True
 
+class DoctorUpdate(BaseModel):
+    email: Optional[str] = None
+    name: Optional[str] = None
+    adress: Optional[str] = None
+    birthdate: Optional[date] = None
+    phoneNumber: Optional[str] = None
+    description: Optional[str] = None
+    rating: Optional[float] = None
+
+    class Config:
+        from_attributes = True
+
 class Doctor(DoctorBase):
     id: int
     user_id: int

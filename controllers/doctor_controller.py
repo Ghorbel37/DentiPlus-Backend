@@ -4,7 +4,7 @@ from dependencies.get_db import get_db
 from dependencies.env import BCRYPT_SALT_ROUNDS
 from dependencies.auth import bcrypt
 import models
-from schemas.doctor_schemas import Doctor, DoctorCreate
+from schemas.doctor_schemas import Doctor, DoctorCreate, DoctorUpdate
 from models import RoleUser
 
 router = APIRouter(prefix="/doctors", tags=["Doctors"])
@@ -96,3 +96,49 @@ def get_doctors_by_name(name: str, db: Session = Depends(get_db)):
         "description": doctor.description,
         "rating": doctor.rating
     } for doctor in doctors]
+
+@router.put("/{doctor_id}", response_model=Doctor)
+def update_doctor(doctor_id: int, doctor_update: DoctorUpdate, db: Session = Depends(get_db)):
+    db_doctor = db.query(models.Doctor).filter(models.Doctor.id == doctor_id).first()
+    if db_doctor is None:
+        raise HTTPException(status_code=404, detail="Doctor not found")
+    
+    db_user = db_doctor.user
+    
+    # Update User fields if provided
+    if doctor_update.email is not None:
+        # Check if new email is already taken by another user
+        if db.query(models.User).filter(models.User.email == doctor_update.email, models.User.id != db_user.id).first():
+            raise HTTPException(status_code=400, detail="Email already registered")
+        db_user.email = doctor_update.email
+    if doctor_update.name is not None:
+        db_user.name = doctor_update.name
+    if doctor_update.adress is not None:
+        db_user.adress = doctor_update.adress
+    if doctor_update.birthdate is not None:
+        db_user.birthdate = doctor_update.birthdate
+    if doctor_update.phoneNumber is not None:
+        db_user.phoneNumber = doctor_update.phoneNumber
+    
+    # Update Doctor fields if provided
+    if doctor_update.description is not None:
+        db_doctor.description = doctor_update.description
+    if doctor_update.rating is not None:
+        db_doctor.rating = doctor_update.rating
+
+    db.commit()
+    db.refresh(db_user)
+    db.refresh(db_doctor)
+
+    return {
+        "id": db_doctor.id,
+        "user_id": db_user.id,
+        "email": db_user.email,
+        "name": db_user.name,
+        "role": db_user.role,
+        "adress": db_user.adress,
+        "birthdate": db_user.birthdate,
+        "phoneNumber": db_user.phoneNumber,
+        "description": db_doctor.description,
+        "rating": db_doctor.rating
+    }
