@@ -34,7 +34,7 @@ class User(Base):
     password = Column(String(255), nullable=False)
     phoneNumber = Column(String(20), nullable=True)
     role = Column(Enum(RoleUser), nullable=False)
-    disabled = Column(Boolean, default=False)
+    disabled = Column(Boolean, default=False, nullable=False)
 
     # Relationships
     doctors = relationship("Doctor", back_populates="user", cascade="all, delete-orphan")
