@@ -1,6 +1,6 @@
 """Contains SQLAlchemy database models inheriting from Base
 Can be used to generate database"""
-from sqlalchemy import Column, Integer, String, Float, Date, TIMESTAMP, ForeignKey, Enum, Table, Text
+from sqlalchemy import Boolean, Column, Integer, String, Float, Date, TIMESTAMP, ForeignKey, Enum, Table, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from dependencies.database import Base  # Adjust if needed
@@ -34,6 +34,7 @@ class User(Base):
     password = Column(String(255), nullable=False)
     phoneNumber = Column(String(20), nullable=True)
     role = Column(Enum(RoleUser), nullable=False)
+    disabled = Column(Boolean, default=False)
 
     # Relationships
     doctors = relationship("Doctor", back_populates="user", cascade="all, delete-orphan")
