@@ -1,22 +1,17 @@
 from pydantic import BaseModel
 from typing import Optional
+from models import RoleUser
 
-# Pydantic models
 class User(BaseModel):
     email: str
-    role: str
+    role: RoleUser
     disabled: Optional[bool] = False
+
+    class Config:
+        from_attributes = True
 
 class UserInDB(User):
     hashed_password: str
-
-class AuthUser(BaseModel):
-    email: str
-    role: str
-    disabled: Optional[bool] = False
-    
-    class Config:
-        from_attributes = True
 
 class Token(BaseModel):
     access_token: str

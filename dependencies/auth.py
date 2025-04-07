@@ -1,11 +1,10 @@
-# dependencies/auth.py
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 import jwt
 import bcrypt
 from typing import Optional
 from datetime import datetime, timedelta
-from dependencies.env import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, TOKEN_URL, BCRYPT_SALT_ROUNDS
+from dependencies.env import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, TOKEN_URL
 from sqlalchemy.orm import Session
 from dependencies.get_db import get_db
 import models
@@ -22,9 +21,9 @@ def get_user(db: Session, email: str) -> Optional[UserInDB]:
     if user:
         return UserInDB(
             email=user.email,
-            role=user.role.value,
+            role=user.role,
             hashed_password=user.password,
-            disabled=False  # Add a disabled field to models.User if needed
+            disabled=user.disabled
         )
     return None
 
@@ -37,6 +36,9 @@ def authenticate_user(db: Session, email: str, password: str) -> Optional[UserIn
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()
     expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    # Convert RoleUser enum to string for JWT payload
+    if "role" in to_encode and isinstance(to_encode["role"], models.RoleUser):
+        to_encode["role"] = to_encode["role"].value
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
@@ -50,14 +52,15 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
-        if email is None:
+        role_str: str = payload.get("role")
+        if email is None or role_str is None:
             raise credentials_exception
-    except jwt.PyJWTError:
+    except (jwt.PyJWTError, ValueError):
         raise credentials_exception
     user = get_user(db, email)
     if user is None or user.disabled:
         raise credentials_exception
-    return user
+    return User(email=user.email, role=user.role, disabled=user.disabled)
 
 async def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
     if current_user.disabled:
@@ -66,7 +69,7 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
 
 # Role checker
 class RoleChecker:
-    def __init__(self, allowed_roles: list[str]):
+    def __init__(self, allowed_roles: list[models.RoleUser]):
         self.allowed_roles = allowed_roles
 
     async def __call__(self, user: User = Depends(get_current_active_user)):
