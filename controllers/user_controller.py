@@ -5,7 +5,7 @@ from dependencies.auth import bcrypt, get_current_active_user
 from dependencies.env import BCRYPT_SALT_ROUNDS
 from dependencies.get_db import get_db
 import models
-from schemas.auth_schemas import AuthUser
+from schemas.auth_schemas import User as AuthUser
 from schemas.user_schemas import User, UserListElement, UserUpdatePassword
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -31,7 +31,7 @@ def get_users_by_name(name: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="No users found with that name")
     return users
 
-@router.put("/me/password", response_model=User)
+@router.put("/me/password", response_model=AuthUser)
 def update_password(
     password_update: UserUpdatePassword,
     current_user: AuthUser = Depends(get_current_active_user),
@@ -55,7 +55,6 @@ def update_password(
     db.refresh(db_user)
 
     return {
-        "id": db_user.id,
         "email": db_user.email,
         "name": db_user.name,
         "role": db_user.role
