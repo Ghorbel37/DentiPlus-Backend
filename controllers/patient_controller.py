@@ -7,7 +7,7 @@ import models
 from schemas.patient_schemas import Patient, PatientCreate
 from models import RoleUser
 
-router = APIRouter(prefix="/patients", tags=["patients"])
+router = APIRouter(prefix="/patients", tags=["Patients"])
 
 @router.post("/", response_model=Patient)
 def create_patient(patient: PatientCreate, db: Session = Depends(get_db)):
