@@ -1,23 +1,38 @@
-from datetime import date
-from typing import Optional
 from pydantic import BaseModel
-from .user_schemas import RoleUser, User, UserCreate
+from typing import Optional
+from datetime import date
+from models import RoleUser
 
 class PatientBase(BaseModel):
+    email: str
     name: str
-    birthdate: Optional[date] = None
 
-# Schema for Patient-specific fields
-class PatientCreate(BaseModel):
+class PatientCreateBase(BaseModel):
+    email: str
+    name: str
+    password: str
+
+class PatientCreate(PatientCreateBase):
+    adress: Optional[str] = None
+    birthdate: Optional[date] = None
+    phoneNumber: Optional[str] = None
     calories: Optional[int] = None
     frequenceCardiaque: Optional[int] = None
     poids: Optional[int] = None
 
-# Combined schemas for Patient and Doctor account creation
-class PatientAccountCreate(UserCreate, PatientCreate):
-    role: RoleUser = RoleUser.PATIENT
+    class Config:
+        from_attributes = True
 
-# Response schemas
-class Patient(User, PatientCreate):
+class Patient(PatientBase):
+    id: int
+    user_id: int
+    role: RoleUser = RoleUser.PATIENT
+    adress: Optional[str] = None
+    birthdate: Optional[date] = None
+    phoneNumber: Optional[str] = None
+    calories: Optional[int] = None
+    frequenceCardiaque: Optional[int] = None
+    poids: Optional[int] = None
+
     class Config:
         from_attributes = True
