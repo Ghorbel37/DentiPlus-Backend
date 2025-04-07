@@ -51,8 +51,8 @@ class HypotheseBase(BaseModel):
     condition: str
     confidence: int
 
-class SymptomeBase(BaseModel):
-    symptome: str
+class SymptomBase(BaseModel):
+    symptom: str
 
 # Response Schemas
 class UserResponse(UserBase):
@@ -84,7 +84,11 @@ class HypotheseResponse(HypotheseBase):
     class Config:
         from_attributes = True
 
-class SymptomeResponse(SymptomeBase):
+class SymptomRequest(BaseModel):
+    symptoms: List[str]
+    additional_details: str = "None"
+
+class SymptomResponse(SymptomBase):
     id: int
     consultation_id: int
     class Config:
@@ -104,7 +108,7 @@ class ConsultationResponse(ConsultationBase):
     patient: PatientResponse
     chat_messages: List[ChatMessageResponse] = []
     hypotheses: List[HypotheseResponse] = []
-    symptomes: List[SymptomeResponse] = []
+    symptoms: List[SymptomResponse] = []
     class Config:
         from_attributes = True
 

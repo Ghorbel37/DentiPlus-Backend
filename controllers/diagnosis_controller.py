@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from dependencies.get_db import get_db
 from schemas.diagnosis_schemas import (ConsultationResponse, ConsultationCreate, ChatMessageResponse,
                           ConversationHistoryCreate, EtatConsultation, MessageSenderType)
-from models import Consultation, ChatMessage, Hypothese, Symptomes, Patient, Doctor
+from models import Consultation, ChatMessage, Hypothese, Symptoms, Patient, Doctor
 import services.llm_service as llm_service  # Hypothetical LLM service
 
 router = APIRouter(prefix="/diagnostics", tags=["diagnostics"])
@@ -130,8 +130,8 @@ def finish_conversation_for_diagnostic(diagnostic_id: int, db: Session = Depends
     
     # Save symptoms
     for symptom in symptoms:
-        db_symptom = Symptomes(
-            symptome=symptom,
+        db_symptom = Symptoms(
+            symptom=symptom,
             user_id=diagnostic.patient.user_id,
             consultation_id=diagnostic_id
         )

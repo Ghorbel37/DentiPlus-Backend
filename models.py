@@ -85,7 +85,7 @@ class Consultation(Base):
     patient = relationship("Patient", back_populates="consultations", foreign_keys=[patient_id])
     appointment = relationship("Appointment", back_populates="consultation", uselist=False, cascade="all, delete-orphan")
     hypotheses = relationship("Hypothese", back_populates="consultation", cascade="all, delete-orphan")
-    symptomes = relationship("Symptomes", back_populates="consultation", cascade="all, delete-orphan")
+    symptoms = relationship("Symptoms", back_populates="consultation", cascade="all, delete-orphan")
     chat_messages = relationship("ChatMessage", back_populates="consultation",cascade="all, delete-orphan",order_by="ChatMessage.timestamp")
 
 class Appointment(Base):
@@ -113,17 +113,17 @@ class Hypothese(Base):
     # Relationship
     consultation = relationship("Consultation", back_populates="hypotheses")
 
-class Symptomes(Base):
-    __tablename__ = "symptomes"
+class Symptoms(Base):
+    __tablename__ = "symptoms"
     __table_args__ = {"mysql_engine": "InnoDB"}
     
     id = Column(Integer, primary_key=True, index=True)
-    symptome = Column(String(255), nullable=False)
+    symptom = Column(String(255), nullable=False)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     consultation_id = Column(Integer, ForeignKey('consultations.id'), nullable=False)  # New field
 
     # Relationships
-    consultation = relationship("Consultation", back_populates="symptomes")
+    consultation = relationship("Consultation", back_populates="symptoms")
 
 class MessageSenderType(enum.Enum):
     SYSTEM = "SYSTEM"
