@@ -37,17 +37,16 @@ class User(Base):
     disabled = Column(Boolean, default=False, nullable=False)
 
     # Relationships
-    doctors = relationship("Doctor", back_populates="user", cascade="all, delete-orphan")
-    patients = relationship("Patient", back_populates="user", cascade="all, delete-orphan")
+    doctor = relationship("Doctor", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    patient = relationship("Patient", back_populates="user", uselist=False, cascade="all, delete-orphan")
 
 class Doctor(Base):
     __tablename__ = "doctors"
     __table_args__ = {"mysql_engine": "InnoDB"}
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, ForeignKey('users.id'), primary_key=True)
     description = Column(Text, nullable=True)
     rating = Column(Float, default=0.0)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
 
     # Relationship
     user = relationship("User", back_populates="doctors")
@@ -57,8 +56,7 @@ class Patient(Base):
     __tablename__ = "patients"
     __table_args__ = {"mysql_engine": "InnoDB"}
     
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    id = Column(Integer, ForeignKey('users.id'), primary_key=True)
     calories = Column(Integer, nullable=True)
     frequenceCardiaque = Column(Integer, nullable=True)
     poids = Column(Integer, nullable=True)
