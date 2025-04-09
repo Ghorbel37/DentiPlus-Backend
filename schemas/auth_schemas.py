@@ -3,6 +3,7 @@ from typing import Optional
 from models import RoleUser
 
 class User(BaseModel):
+    id: int
     email: str
     role: RoleUser
     disabled: Optional[bool] = False

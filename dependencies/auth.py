@@ -20,6 +20,7 @@ def get_user(db: Session, email: str) -> Optional[UserInDB]:
     user = db.query(models.User).filter(models.User.email == email).first()
     if user:
         return UserInDB(
+            id=user.id,
             email=user.email,
             role=user.role,
             hashed_password=user.password,
@@ -60,7 +61,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
     user = get_user(db, email)
     if user is None or user.disabled:
         raise credentials_exception
-    return User(email=user.email, role=user.role, disabled=user.disabled)
+    return User(id=user.id, email=user.email, role=user.role, disabled=user.disabled)
 
 async def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
     if current_user.disabled:
