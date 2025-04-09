@@ -38,7 +38,6 @@ class PatientUpdate(BaseModel):
 
 class Patient(PatientBase):
     id: int
-    user_id: int
     role: RoleUser = RoleUser.PATIENT
     adress: Optional[str] = None
     birthdate: Optional[date] = None

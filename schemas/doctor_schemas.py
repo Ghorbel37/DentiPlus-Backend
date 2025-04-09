@@ -36,7 +36,6 @@ class DoctorUpdate(BaseModel):
 
 class Doctor(DoctorBase):
     id: int
-    user_id: int
     role: RoleUser = RoleUser.DOCTOR
     adress: Optional[str] = None
     birthdate: Optional[date] = None

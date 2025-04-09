@@ -28,24 +28,22 @@ def create_patient(patient: PatientCreate, db: Session = Depends(get_db)):
         phoneNumber=patient.phoneNumber,
         role=RoleUser.PATIENT
     )
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
 
     # Create Patient
     db_patient = models.Patient(
-        user_id=db_user.id,
         calories=patient.calories,
         frequenceCardiaque=patient.frequenceCardiaque,
         poids=patient.poids
     )
-    db.add(db_patient)
-    db.commit()
-    db.refresh(db_patient)
+    db_user.patient = db_patient  # Link Patient to User
+
+    db.add(db_user)  # Adding User will cascade to Patient
+    db.commit()  # Single commit for both
+    db.refresh(db_user)  # Refresh User
+    db.refresh(db_patient)  # Refresh Patient
 
     return {
         "id": db_patient.id,
-        "user_id": db_user.id,
         "email": db_user.email,
         "name": db_user.name,
         "role": db_user.role,
@@ -68,7 +66,6 @@ def get_patient_by_id(patient_id: int, db: Session = Depends(get_db)):
     
     return {
         "id": patient.id,
-        "user_id": user.id,
         "email": user.email,
         "name": user.name,
         "role": user.role,
@@ -87,7 +84,6 @@ def get_patients_by_name(name: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="No patients found with that name")
     return [{
         "id": patient.id,
-        "user_id": patient.user.id,
         "email": patient.user.email,
         "name": patient.user.name,
         "role": patient.user.role,
@@ -136,7 +132,6 @@ def update_patient(patient_id: int, patient_update: PatientUpdate, db: Session =
 
     return {
         "id": db_patient.id,
-        "user_id": db_user.id,
         "email": db_user.email,
         "name": db_user.name,
         "role": db_user.role,

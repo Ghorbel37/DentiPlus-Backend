@@ -28,24 +28,22 @@ def create_doctor(doctor: DoctorCreate, db: Session = Depends(get_db)):
         phoneNumber=doctor.phoneNumber,
         role=RoleUser.DOCTOR
     )
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
 
     # Create Doctor
     db_doctor = models.Doctor(
-        user_id=db_user.id,
         description=doctor.description,
         rating=doctor.rating
     )
-    db.add(db_doctor)
+
+    db_user.doctor = db_doctor
+    db.add(db_user)
     db.commit()
+    db.refresh(db_user)
     db.refresh(db_doctor)
 
     # Construct response
     return {
         "id": db_doctor.id,
-        "user_id": db_user.id,
         "email": db_user.email,
         "name": db_user.name,
         "role": db_user.role,
@@ -67,7 +65,6 @@ def get_doctor_by_id(doctor_id: int, db: Session = Depends(get_db)):
     
     return {
         "id": doctor.id,
-        "user_id": user.id,
         "email": user.email,
         "name": user.name,
         "role": user.role,
@@ -86,7 +83,6 @@ def get_doctors_by_name(name: str, db: Session = Depends(get_db)):
     
     return [{
         "id": doctor.id,
-        "user_id": doctor.user.id,
         "email": doctor.user.email,
         "name": doctor.user.name,
         "role": doctor.user.role,
@@ -132,7 +128,6 @@ def update_doctor(doctor_id: int, doctor_update: DoctorUpdate, db: Session = Dep
 
     return {
         "id": db_doctor.id,
-        "user_id": db_user.id,
         "email": db_user.email,
         "name": db_user.name,
         "role": db_user.role,

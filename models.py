@@ -49,7 +49,7 @@ class Doctor(Base):
     rating = Column(Float, default=0.0)
 
     # Relationship
-    user = relationship("User", back_populates="doctors")
+    user = relationship("User", back_populates="doctor")
     consultations = relationship("Consultation", back_populates="doctor", foreign_keys="Consultation.doctor_id")
 
 class Patient(Base):
@@ -62,7 +62,7 @@ class Patient(Base):
     poids = Column(Integer, nullable=True)
 
     # Relationship
-    user = relationship("User", back_populates="patients")
+    user = relationship("User", back_populates="patient")
     consultations = relationship("Consultation", back_populates="patient", foreign_keys="Consultation.patient_id")
 
 class Consultation(Base):
