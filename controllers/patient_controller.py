@@ -36,11 +36,15 @@ def create_patient(patient: PatientCreate, db: Session = Depends(get_db)):
         poids=patient.poids
     )
     db_user.patient = db_patient  # Link Patient to User
-
     db.add(db_user)  # Adding User will cascade to Patient
-    db.commit()  # Single commit for both
-    db.refresh(db_user)  # Refresh User
-    db.refresh(db_patient)  # Refresh Patient
+
+    try:
+        db.commit()
+        db.refresh(db_user)
+        db.refresh(db_patient)
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
     return {
         "id": db_patient.id,

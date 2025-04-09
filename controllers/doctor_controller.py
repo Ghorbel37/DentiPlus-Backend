@@ -37,9 +37,14 @@ def create_doctor(doctor: DoctorCreate, db: Session = Depends(get_db)):
 
     db_user.doctor = db_doctor
     db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
-    db.refresh(db_doctor)
+    
+    try:
+        db.commit()
+        db.refresh(db_user)
+        db.refresh(db_doctor)
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
     # Construct response
     return {
