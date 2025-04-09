@@ -71,8 +71,9 @@ class Consultation(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     date = Column(TIMESTAMP, server_default=func.now(), nullable=False)
-    diagnostique = Column(String(255), nullable=True)
+    diagnosis = Column(String(255), nullable=True)
     chat_summary = Column(Text, nullable=True)
+    doctor_note = Column(Text, nullable=True)
     etat = Column(Enum(EtatConsultation), nullable=False)
     fraisAdministratives = Column(Float, nullable=True)
     prix = Column(Float, nullable=True)
