@@ -20,3 +20,6 @@ class Condition(BaseModel):
 
 class ConditionsResponse(BaseModel):
     diagnosis: List[Condition]
+
+class ChatRequest(BaseModel):
+    message: str
