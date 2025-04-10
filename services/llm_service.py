@@ -1,15 +1,9 @@
 """Contains the methods that communicate with the LLM FastAPI"""
 import requests
 from dependencies.env import BASE_URL
-from pydantic import BaseModel
 from typing import List, Dict
 
-class SymptomRequest(BaseModel):
-    symptoms: List[str]
-    additional_details: str = "None"
-
-class DiagnosisResponse(BaseModel):
-    diagnosis: List[Dict]
+from schemas.llm_service_schemas import ConditionsResponse, DiagnosisResponse, SymptomsResponse
 
 def diagnose_patient_en(symptoms: List[str], additional_details: str = "None") -> DiagnosisResponse:
     url = f"{BASE_URL}/diagnose-en"
@@ -33,20 +27,6 @@ def diagnose_patient_fr(symptoms: List[str], additional_details: str = "None") -
 
     return DiagnosisResponse(**response.json())
 
-class Symptom(BaseModel):
-    symptom: str
-
-class SymptomsResponse(BaseModel):
-    symptoms: List[Symptom]
-
-class Condition(BaseModel):
-    condition: str
-    confidence: int
-
-class ConditionsResponse(BaseModel):
-    diagnosis: List[Condition]
-
-# New methods
 def extract_symptoms(chat_history: List[Dict[str, str]]) -> SymptomsResponse:
     """
     Extracts symptoms from the chat history by sending a request to the Colab server.
