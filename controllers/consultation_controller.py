@@ -9,7 +9,7 @@ from schemas.consultation_schemas import Consultation, ConsultationListElement, 
 from typing import List
 
 from schemas.llm_service_schemas import ChatRequest
-from services.llm_service import chat_with_model, extract_conditions, extract_symptoms, summarize_chat
+from services.llm_service import chat_with_model, process_chat_history
 
 router = APIRouter(prefix="/consultations", tags=["Consultations"])
 
@@ -315,18 +315,13 @@ async def finish_consultation_chat(
         for msg in chat_history_db
     ]
 
-    # Step 3: Call LLM services and handle responses
+    # Step 3: Call the combined LLM service and handle response
     try:
-        # Summarize the chat
-        chat_summary = summarize_chat(chat_history)
-
-        # Extract symptoms
-        symptoms_response = extract_symptoms(chat_history)
-        symptoms = symptoms_response.symptoms
-
-        # Extract conditions
-        conditions_response = extract_conditions(chat_history)
-        conditions = conditions_response.diagnosis
+        # Call the combined method to get symptoms, conditions, and summary
+        combined_response = process_chat_history(chat_history)
+        symptoms = combined_response.symptoms
+        conditions = combined_response.conditions
+        chat_summary = combined_response.summary
 
     except Exception as e:
         raise HTTPException(
@@ -359,7 +354,7 @@ async def finish_consultation_chat(
         for condition in conditions
     ]
 
-    # Step 5: Save all changes to the database only after successful LLM responses
+    # Step 5: Save all changes to the database only after successful LLM response
     for symptom_obj in symptom_objects:
         db.add(symptom_obj)
     for condition_obj in condition_objects:
