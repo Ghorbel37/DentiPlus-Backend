@@ -286,6 +286,7 @@ async def finish_consultation_chat(
     
     Raises:
         HTTPException: If the consultation is not found, user is not authorized,
+                       consultation is not in EN_ATTENTE state,
                        or if there’s an error communicating with the LLM.
     """
     # Step 1: Verify the consultation exists and belongs to the patient
@@ -299,7 +300,14 @@ async def finish_consultation_chat(
             detail="Consultation not found or not authorized"
         )
 
-    # Step 2: Fetch the full chat history
+    # Step 2: Check if consultation is in EN_ATTENTE state
+    if consultation.etat != models.EtatConsultation.EN_ATTENTE:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Consultation cannot be finished; it is not in EN_ATTENTE state"
+        )
+
+    # Step 3: Fetch the full chat history
     chat_history_db = db.query(models.ChatMessage).filter(
         models.ChatMessage.consultation_id == consultation_id
     ).order_by(models.ChatMessage.timestamp.asc()).all()
@@ -315,7 +323,7 @@ async def finish_consultation_chat(
         for msg in chat_history_db
     ]
 
-    # Step 3: Call the combined LLM service and handle response
+    # Step 4: Call the combined LLM service and handle response
     try:
         # Call the combined method to get symptoms, conditions, and summary
         combined_response = process_chat_history(chat_history)
@@ -329,7 +337,7 @@ async def finish_consultation_chat(
             detail=f"Error processing chat with LLM: {str(e)}"
         )
 
-    # Step 4: Prepare database updates in memory
+    # Step 5: Prepare database updates in memory
     # Update consultation with chat summary and set etat to VALIDE
     consultation.chat_summary = chat_summary
     consultation.etat = models.EtatConsultation.EN_ATTENTE
@@ -354,7 +362,7 @@ async def finish_consultation_chat(
         for condition in conditions
     ]
 
-    # Step 5: Save all changes to the database only after successful LLM response
+    # Step 6: Save all changes to the database only after successful LLM response
     for symptom_obj in symptom_objects:
         db.add(symptom_obj)
     for condition_obj in condition_objects:
@@ -365,5 +373,5 @@ async def finish_consultation_chat(
     # Refresh the consultation to include updated relationships
     db.refresh(consultation)
 
-    # Step 6: Return the updated consultation
+    # Step 7: Return the updated consultation
     return consultation
