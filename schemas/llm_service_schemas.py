@@ -11,15 +11,14 @@ class DiagnosisResponse(BaseModel):
 class Symptom(BaseModel):
     symptom: str
 
-class SymptomsResponse(BaseModel):
-    symptoms: List[Symptom]
-
 class Condition(BaseModel):
     condition: str
     confidence: int
 
-class ConditionsResponse(BaseModel):
-    diagnosis: List[Condition]
-
 class ChatRequest(BaseModel):
     message: str
+
+class CombinedResponse(BaseModel):
+    symptoms: List[Symptom]
+    conditions: List[Condition]
+    summary: str
