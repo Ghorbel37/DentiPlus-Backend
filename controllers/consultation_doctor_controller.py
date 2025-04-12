@@ -138,7 +138,7 @@ async def validate_consultation(
     ]
 
     # Check if doctor_note is empty
-    improved_note = ""
+    improved_note = None
     if note_data.doctor_note and note_data.doctor_note.strip():
         # Improve the doctor’s note using the LLM
         try:
@@ -219,7 +219,7 @@ async def mark_reconsultation(
     ]
 
     # Check if doctor_note is empty
-    improved_note = ""
+    improved_note = None
     if note_data.doctor_note and note_data.doctor_note.strip():
         # Improve the doctor’s note using the LLM
         try:
