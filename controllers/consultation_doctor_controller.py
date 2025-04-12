@@ -155,7 +155,8 @@ async def validate_consultation(
 
     # Update consultation
     consultation.etat = models.EtatConsultation.VALIDE
-    consultation.doctor_note = improved_note
+    consultation.doctor_note = note_data.doctor_note
+    consultation.diagnosis = improved_note
 
     db.add(consultation)
     db.commit()
@@ -236,8 +237,8 @@ async def mark_reconsultation(
 
     # Update consultation
     consultation.etat = models.EtatConsultation.RECONSULTATION
-    consultation.doctor_note = improved_note
-
+    consultation.doctor_note = note_data.doctor_note
+    consultation.diagnosis = improved_note
     db.add(consultation)
     db.commit()
     db.refresh(consultation)
