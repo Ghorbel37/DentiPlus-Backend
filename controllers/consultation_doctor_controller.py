@@ -82,7 +82,7 @@ async def get_doctor_consultations_by_etat(
         )
     return consultations
 
-@router.patch("/consultations/{consultation_id}/validate", response_model=Consultation)
+@router.post("/consultations/{consultation_id}/validate", response_model=Consultation)
 async def validate_consultation(
     consultation_id: int,
     note_data: DoctorNoteUpdate,
@@ -163,7 +163,7 @@ async def validate_consultation(
 
     return consultation
 
-@router.patch("/consultations/{consultation_id}/reconsultation", response_model=Consultation)
+@router.post("/consultations/{consultation_id}/reconsultation", response_model=Consultation)
 async def mark_reconsultation(
     consultation_id: int,
     note_data: DoctorNoteUpdate,
