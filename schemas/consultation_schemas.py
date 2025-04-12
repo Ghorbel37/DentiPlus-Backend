@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional, List
-from models import EtatConsultation, EtatAppointment, MessageSenderType, RoleUser
+from models import EtatConsultation, EtatAppointment, MessageSenderType
 
 class ChatMessageCreate(BaseModel):
     content: str
