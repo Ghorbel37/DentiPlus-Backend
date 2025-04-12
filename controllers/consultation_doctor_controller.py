@@ -7,10 +7,21 @@ from schemas.auth_schemas import User as AuthUser
 from schemas.consultation_doctor_schemas import Consultation, ConsultationListElement, DoctorNoteUpdate
 from typing import List
 
+from services.llm_service import improve_doctor_note
+
 router = APIRouter(prefix="/consultation-doctor", tags=["Consultation Doctor"])
 
 # Dependency to ensure the user is a doctor
 allow_doctor = RoleChecker([models.RoleUser.DOCTOR])
+
+# Helper function to map sender_type to role
+def map_sender_to_role(sender_type: models.MessageSenderType) -> str:
+    if sender_type == models.MessageSenderType.USER:
+        return "user"
+    elif sender_type == models.MessageSenderType.ASSISTANT:
+        return "assistant"
+    else:
+        return "system"  # Default fallback
 
 @router.get("/consultations", response_model=List[ConsultationListElement])
 async def get_all_doctor_consultations(
@@ -79,7 +90,7 @@ async def validate_consultation(
     db: Session = Depends(get_db)
 ):
     """
-    Validate a consultation by setting etat to VALIDE and adding a doctor_note,
+    Validate a consultation by setting etat to VALIDE and adding an improved doctor_note,
     but only if the current etat is EN_ATTENTE.
     
     Args:
@@ -93,7 +104,7 @@ async def validate_consultation(
     
     Raises:
         HTTPException: If the consultation is not found, not authorized,
-                       or etat is not EN_ATTENTE.
+                       etat is not EN_ATTENTE, or LLM processing fails.
     """
     consultation = db.query(models.Consultation).filter(
         models.Consultation.id == consultation_id,
@@ -112,8 +123,39 @@ async def validate_consultation(
             detail="Consultation must be in EN_ATTENTE state to be validated"
         )
 
+    # Fetch the full chat history
+    chat_history_db = consultation.chat_messages
+    if not chat_history_db:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No chat history found for this consultation"
+        )
+
+    # Convert to list of dictionaries for LLM
+    chat_history = [
+        {"role": map_sender_to_role(msg.sender_type), "content": msg.content}  # Assuming sender_type is 'user' or 'assistant'
+        for msg in chat_history_db
+    ]
+
+    # Check if doctor_note is empty
+    improved_note = ""
+    if note_data.doctor_note and note_data.doctor_note.strip():
+        # Improve the doctor’s note using the LLM
+        try:
+            improved_note = improve_doctor_note(
+                etat=models.EtatConsultation.VALIDE.value,
+                doctor_note=note_data.doctor_note,
+                chat_history=chat_history
+            )
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error improving doctor note with LLM: {str(e)}"
+            )
+
+    # Update consultation
     consultation.etat = models.EtatConsultation.VALIDE
-    consultation.doctor_note = note_data.doctor_note
+    consultation.doctor_note = improved_note
 
     db.add(consultation)
     db.commit()
@@ -129,7 +171,7 @@ async def mark_reconsultation(
     db: Session = Depends(get_db)
 ):
     """
-    Mark a consultation for reconsultation by setting etat to RECONSULTATION and adding a doctor_note,
+    Mark a consultation for reconsultation by setting etat to RECONSULTATION and adding an improved doctor_note,
     but only if the current etat is EN_ATTENTE.
     
     Args:
@@ -143,7 +185,7 @@ async def mark_reconsultation(
     
     Raises:
         HTTPException: If the consultation is not found, not authorized,
-                       or etat is not EN_ATTENTE.
+                       etat is not EN_ATTENTE, or LLM processing fails.
     """
     consultation = db.query(models.Consultation).filter(
         models.Consultation.id == consultation_id,
@@ -162,8 +204,39 @@ async def mark_reconsultation(
             detail="Consultation must be in EN_ATTENTE state to be marked for reconsultation"
         )
 
+    # Fetch the full chat history
+    chat_history_db = consultation.chat_messages
+    if not chat_history_db:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No chat history found for this consultation"
+        )
+
+    # Convert to list of dictionaries for LLM
+    chat_history = [
+        {"role": map_sender_to_role(msg.sender_type), "content": msg.content}  # Assuming sender_type is 'user' or 'assistant'
+        for msg in chat_history_db
+    ]
+
+    # Check if doctor_note is empty
+    improved_note = ""
+    if note_data.doctor_note and note_data.doctor_note.strip():
+        # Improve the doctor’s note using the LLM
+        try:
+            improved_note = improve_doctor_note(
+                etat=models.EtatConsultation.RECONSULTATION.value,
+                doctor_note=note_data.doctor_note,
+                chat_history=chat_history
+            )
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error improving doctor note with LLM: {str(e)}"
+            )
+
+    # Update consultation
     consultation.etat = models.EtatConsultation.RECONSULTATION
-    consultation.doctor_note = note_data.doctor_note
+    consultation.doctor_note = improved_note
 
     db.add(consultation)
     db.commit()
