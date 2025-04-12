@@ -14,6 +14,7 @@ class RoleUser(enum.Enum):
 class EtatConsultation(enum.Enum):
     VALIDE = "VALIDE"
     EN_ATTENTE = "EN_ATTENTE"
+    EN_COURS = "EN_COURS"
     RECONSULTATION = "RECONSULTATION"
 
 class EtatAppointment(enum.Enum):

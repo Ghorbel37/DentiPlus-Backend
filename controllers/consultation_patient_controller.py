@@ -41,7 +41,7 @@ async def create_consultation(
 
     # Create a new consultation
     new_consultation = models.Consultation(
-        etat=models.EtatConsultation.EN_ATTENTE,  # Default state
+        etat=models.EtatConsultation.EN_COURS,  # En cours de consultation
         doctor_id=doctor.id,
         patient_id=patient.id,
         diagnosis=consultation_data.diagnosis,
@@ -53,15 +53,6 @@ async def create_consultation(
     db.add(new_consultation)
     db.commit()
     db.refresh(new_consultation)
-
-    # # Create an associated appointment (initially empty, with default state)
-    # new_appointment = models.Appointment(
-    #     dateAppointment=datetime.utcnow(),  # Placeholder; adjust as needed
-    #     etat=models.EtatAppointment.PLANIFIE,
-    #     consultation_id=new_consultation.id
-    # )
-    # db.add(new_appointment)
-    # db.commit()
 
     return new_consultation
 
@@ -286,7 +277,7 @@ async def finish_consultation_chat(
     
     Raises:
         HTTPException: If the consultation is not found, user is not authorized,
-                       consultation is not in EN_ATTENTE state,
+                       consultation is not in EN_COURS state,
                        or if there’s an error communicating with the LLM.
     """
     # Step 1: Verify the consultation exists and belongs to the patient
@@ -300,11 +291,11 @@ async def finish_consultation_chat(
             detail="Consultation not found or not authorized"
         )
 
-    # Step 2: Check if consultation is in EN_ATTENTE state
-    if consultation.etat != models.EtatConsultation.EN_ATTENTE:
+    # Step 2: Check if consultation is in EN_COURS state
+    if consultation.etat != models.EtatConsultation.EN_COURS:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Consultation cannot be finished; it is not in EN_ATTENTE state"
+            detail="Consultation cannot be finished; it is not in EN_COURS state"
         )
 
     # Step 3: Fetch the full chat history
@@ -338,7 +329,7 @@ async def finish_consultation_chat(
         )
 
     # Step 5: Prepare database updates in memory
-    # Update consultation with chat summary and set etat to VALIDE
+    # Update consultation with chat summary and set etat to EN_ATTENTE
     consultation.chat_summary = chat_summary
     consultation.etat = models.EtatConsultation.EN_ATTENTE
 
