@@ -6,7 +6,7 @@ from controllers.diagnosis_controller import router as diagnosis_router
 from controllers.blockchain_controller import router as blockchain_router
 from controllers.llm_controller import router as llm_router
 # from controllers.auth_controller import router as auth_router
-from controllers import auth_controller, consultation_controller, consultation_doctor_controller, user_controller, patient_controller, doctor_controller
+from controllers import auth_controller, consultation_patient_controller, consultation_doctor_controller, user_controller, patient_controller, doctor_controller
 
 # # Enable SQLAlchemy logging: Shows SQL queries
 # import logging
@@ -41,5 +41,5 @@ app.include_router(diagnosis_router)
 app.include_router(user_controller.router)
 app.include_router(patient_controller.router)
 app.include_router(doctor_controller.router)
-app.include_router(consultation_controller.router)
+app.include_router(consultation_patient_controller.router)
 app.include_router(consultation_doctor_controller.router)

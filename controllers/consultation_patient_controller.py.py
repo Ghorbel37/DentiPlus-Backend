@@ -5,13 +5,13 @@ from dependencies.auth import RoleChecker
 from dependencies.get_db import get_db
 import models
 from schemas.auth_schemas import User as AuthUser
-from schemas.consultation_schemas import Appointment, AppointmentCreate, Consultation, ConsultationListElement, ConsultationCreate, ChatMessageCreate, ChatMessage
+from schemas.consultation_patient_schemas import Appointment, AppointmentCreate, Consultation, ConsultationListElement, ConsultationCreate, ChatMessageCreate, ChatMessage
 from typing import List
 
 from schemas.llm_service_schemas import ChatRequest
 from services.llm_service import chat_with_model, process_chat_history
 
-router = APIRouter(prefix="/consultations", tags=["Consultations"])
+router = APIRouter(prefix="/consultation-patient", tags=["Consultation Patient"])
 
 # Dependency to ensure the user is a patient
 allow_patient = RoleChecker([models.RoleUser.PATIENT])
