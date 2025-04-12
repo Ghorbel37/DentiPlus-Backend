@@ -7,7 +7,7 @@ from schemas.auth_schemas import User as AuthUser
 from schemas.consultation_doctor_schemas import Consultation, ConsultationListElement, DoctorNoteUpdate
 from typing import List
 
-router = APIRouter(prefix="/consultation-doctors", tags=["Consultation Doctors"])
+router = APIRouter(prefix="/consultation-doctor", tags=["Consultation Doctor"])
 
 # Dependency to ensure the user is a doctor
 allow_doctor = RoleChecker([models.RoleUser.DOCTOR])
