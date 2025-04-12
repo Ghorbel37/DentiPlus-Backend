@@ -52,3 +52,17 @@ class ConsultationListElement(BaseModel):
 
     class Config:
         from_attributes = True
+
+# Appointment schemas
+class AppointmentCreate(BaseModel):
+    dateAppointment: datetime
+
+class Appointment(BaseModel):
+    id: int
+    dateCreation: datetime
+    dateAppointment: datetime
+    etat: EtatAppointment
+    consultation_id: int
+
+    class Config:
+        from_attributes = True

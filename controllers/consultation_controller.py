@@ -5,7 +5,7 @@ from dependencies.auth import RoleChecker
 from dependencies.get_db import get_db
 import models
 from schemas.auth_schemas import User as AuthUser
-from schemas.consultation_schemas import Consultation, ConsultationListElement, ConsultationCreate, ChatMessageCreate, ChatMessage
+from schemas.consultation_schemas import Appointment, AppointmentCreate, Consultation, ConsultationListElement, ConsultationCreate, ChatMessageCreate, ChatMessage
 from typing import List
 
 from schemas.llm_service_schemas import ChatRequest
@@ -375,3 +375,70 @@ async def finish_consultation_chat(
 
     # Step 7: Return the updated consultation
     return consultation
+
+# New endpoint to add an appointment
+@router.post("/{consultation_id}/appointments", response_model=Appointment)
+async def add_appointment(
+    consultation_id: int,
+    appointment_data: AppointmentCreate,
+    current_user: AuthUser = Depends(allow_patient),
+    db: Session = Depends(get_db)
+):
+    """
+    Create a new appointment for a consultation if:
+    - The consultation's etat is RECONSULTATION.
+    - No existing appointment is linked to the consultation (checked via consultation.appointment).
+    
+    Args:
+        consultation_id: The ID of the consultation.
+        appointment_data: The request body containing dateAppointment.
+        current_user: The authenticated patient (via dependency).
+        db: The database session (via dependency).
+    
+    Returns:
+        The created Appointment object.
+    
+    Raises:
+        HTTPException: If the consultation is not found, user is not authorized,
+                       etat is not RECONSULTATION, or an appointment already exists.
+    """
+    # Step 1: Verify the consultation exists and belongs to the patient
+    consultation = db.query(models.Consultation).filter(
+        models.Consultation.id == consultation_id,
+        models.Consultation.patient_id == current_user.id
+    ).first()
+    if not consultation:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Consultation not found or not authorized"
+        )
+
+    # Step 2: Check if etat is RECONSULTATION
+    if consultation.etat != models.EtatConsultation.RECONSULTATION:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Consultation must be in RECONSULTATION state to add an appointment"
+        )
+
+    # Step 3: Check if an appointment already exists using consultation.appointment
+    if consultation.appointment:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="An appointment is already linked to this consultation"
+        )
+
+    # Step 4: Create the new appointment
+    new_appointment = models.Appointment(
+        dateCreation=datetime.utcnow(),
+        dateAppointment=appointment_data.dateAppointment,
+        etat=models.EtatAppointment.PLANIFIE,
+        consultation_id=consultation_id
+    )
+
+    # Step 5: Save to database
+    db.add(new_appointment)
+    db.commit()
+    db.refresh(new_appointment)
+
+    # Step 6: Return the created appointment
+    return new_appointment
