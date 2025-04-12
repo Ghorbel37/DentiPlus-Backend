@@ -72,3 +72,32 @@ def chat_with_model(chat_history: List[Dict[str, str]]) -> str:
         raise Exception(f"Error: {response.status_code}, {response.text}")
 
     return response.json()["response"]
+
+def improve_doctor_note(etat: str, doctor_note: str, chat_history: List[Dict[str, str]]) -> str:
+    """
+    Sends the consultation status, doctor’s note, and chat history to the Colab server to generate an improved version of the note.
+
+    Args:
+        etat: The status of the consultation (e.g., 'VALIDE', 'EN_ATTENTE').
+        doctor_note: The doctor’s original note to be improved.
+        chat_history: List of messages, each with 'role' and 'content' keys.
+    
+    Returns:
+        The improved doctor’s note as a string.
+    
+    Raises:
+        Exception: If the request fails or the server returns an error.
+    """
+    url = f"{BASE_URL}/improve_note"
+    data = {
+        "etat": etat,
+        "doctor_note": doctor_note,
+        "chat_history": chat_history
+    }
+
+    response = requests.post(url, json=data)
+
+    if response.status_code != 200:
+        raise Exception(f"Error: {response.status_code}, {response.text}")
+
+    return response.json()["improved_note"]
