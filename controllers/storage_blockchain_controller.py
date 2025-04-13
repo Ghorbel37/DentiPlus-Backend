@@ -1,7 +1,7 @@
 from fastapi import APIRouter
-from services.blockchain_service import get_value, set_value, get_accounts
+from services.storage_blockchain_service import get_value, set_value, get_accounts
 
-router = APIRouter()
+router = APIRouter(prefix="/blockchain_storage", tags=["Blockchain"])
 
 @router.get("/get-value")
 async def get_value_blockchain():

@@ -2,7 +2,7 @@
 from fastapi import HTTPException
 from pydantic import BaseModel
 from web3 import Web3
-from dependencies.env import BLOCKCHAIN_URL, CONTRACT_ADDRESS, ACCOUNT, PRIVATE_KEY
+from dependencies.env import BLOCKCHAIN_URL, STORAGE_CONTRACT_ADDRESS, ACCOUNT, PRIVATE_KEY
 
 class SetValueRequest(BaseModel):
     value: int
@@ -41,7 +41,7 @@ CONTRACT_ABI = [{
     "type": "function"
 }]
 
-contract = w3.eth.contract(address=CONTRACT_ADDRESS, abi=CONTRACT_ABI)
+contract = w3.eth.contract(address=STORAGE_CONTRACT_ADDRESS, abi=CONTRACT_ABI)
 
 def get_value():
     try:
