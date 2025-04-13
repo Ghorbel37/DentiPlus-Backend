@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 from dependencies.get_ngrok_url import get_ngrok_url
 
-load_dotenv()
+load_dotenv(override=True)
 
 # Github Gist Information
 GIST_ID = os.getenv("GIST_ID")
