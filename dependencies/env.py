@@ -15,7 +15,8 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 BLOCKCHAIN_URL = os.getenv("BLOCKCHAIN_URL")
 
 # Contract details (replace with your deployed contract address)
-CONTRACT_ADDRESS = os.getenv("CONTRACT_ADDRESS")
+STORAGE_CONTRACT_ADDRESS = os.getenv("STORAGE_CONTRACT_ADDRESS")
+DIAGNOSIS_CONTRACT_ADDRESS = os.getenv("DIAGNOSIS_CONTRACT_ADDRESS")
 # Public address
 ACCOUNT = os.getenv("ACCOUNT")
 PRIVATE_KEY = os.getenv("PRIVATE_KEY")
