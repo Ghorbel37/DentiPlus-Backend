@@ -17,20 +17,6 @@ def get_all_users(db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="No users found")
     return users
 
-@router.get("/{user_id}", response_model=User)
-def get_user_by_id(user_id: int, db: Session = Depends(get_db)):
-    user = db.query(models.User).filter(models.User.id == user_id).first()
-    if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
-    return user
-
-@router.get("/name/{name}", response_model=list[User])
-def get_users_by_name(name: str, db: Session = Depends(get_db)):
-    users = db.query(models.User).filter(models.User.name.ilike(f"%{name}%")).all()
-    if not users:
-        raise HTTPException(status_code=404, detail="No users found with that name")
-    return users
-
 @router.put("/me/password", response_model=AuthUser)
 def update_password(
     password_update: UserUpdatePassword,
@@ -59,3 +45,43 @@ def update_password(
         "name": db_user.name,
         "role": db_user.role
     }
+
+# New endpoint to get the current logged-in user
+@router.get("/me")
+async def get_current_user(
+    current_user: AuthUser = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Retrieve the details of the currently authenticated user.
+    
+    Args:
+        current_user: The authenticated user (via dependency).
+        db: The database session (via dependency).
+    
+    Returns:
+        The User object representing the current user.
+    
+    Raises:
+        HTTPException: If the user is not found in the database.
+    """
+    # Fetch the user from the database using the authenticated user's email
+    db_user = db.query(models.User).filter(models.User.email == current_user.email).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return db_user
+
+@router.get("/{user_id}", response_model=User)
+def get_user_by_id(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+@router.get("/name/{name}", response_model=list[User])
+def get_users_by_name(name: str, db: Session = Depends(get_db)):
+    users = db.query(models.User).filter(models.User.name.ilike(f"%{name}%")).all()
+    if not users:
+        raise HTTPException(status_code=404, detail="No users found with that name")
+    return users
