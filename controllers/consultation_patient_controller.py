@@ -465,7 +465,7 @@ async def add_appointment(
     # Step 8: Return the created appointment
     return new_appointment
 
-# New endpoint to get unavailable times
+# Updated get_unavailable_times endpoint (no doctor_id)
 @router.post("/unavailable-times", response_model=UnavailableTimesResponse)
 async def get_unavailable_times(
     request: UnavailableTimesRequest,
@@ -473,10 +473,10 @@ async def get_unavailable_times(
     db: Session = Depends(get_db)
 ):
     """
-    Retrieve unavailable time slots for a doctor on a given date.
+    Retrieve unavailable time slots for the single doctor on a given date.
     
     Args:
-        request: The request body containing the date and doctor_id.
+        request: The request body containing the date.
         current_user: The authenticated patient (via dependency).
         db: The database session (via dependency).
     
@@ -484,14 +484,14 @@ async def get_unavailable_times(
         A list of unavailable time slots (30-minute intervals).
     
     Raises:
-        HTTPException: If the doctor is not found.
+        HTTPException: If no doctor is found in the system.
     """
-    # Verify the doctor exists
-    doctor = db.query(models.Doctor).filter(models.Doctor.id == request.doctor_id).first()
+    # Get the single doctor
+    doctor = db.query(models.Doctor).first()
     if not doctor:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Doctor not found"
+            detail="No doctor found in the system"
         )
 
     # Get start and end of the requested date
@@ -502,8 +502,8 @@ async def get_unavailable_times(
     appointments = db.query(models.Appointment).join(
         models.Consultation, models.Appointment.consultation_id == models.Consultation.id
     ).filter(
-        models.Consultation.doctor_id == request.doctor_id,
-        models.Appointment.etat != models.EtatAppointment.ANNULE,  # Ignore canceled appointments
+        models.Consultation.doctor_id == doctor.id,
+        models.Appointment.etat != models.EtatAppointment.ANNULE,
         models.Appointment.dateAppointment >= start_date,
         models.Appointment.dateAppointment < end_date
     ).all()

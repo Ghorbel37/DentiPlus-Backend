@@ -70,7 +70,6 @@ class Appointment(BaseModel):
 # New schemas for unavailable times
 class UnavailableTimesRequest(BaseModel):
     date: date
-    doctor_id: int
 
 class TimeSlot(BaseModel):
     start_time: datetime
