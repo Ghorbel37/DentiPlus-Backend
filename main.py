@@ -5,7 +5,7 @@ import models
 from controllers.diagnosis_controller import router as diagnosis_router
 from controllers.llm_controller import router as llm_router
 # from controllers.auth_controller import router as auth_router
-from controllers import auth_controller, consultation_patient_controller, consultation_doctor_controller, user_controller, patient_controller, doctor_controller, storage_blockchain_controller, diagnosis_blockchain_controller
+from controllers import auth_controller, blockchain_consultation_controller, consultation_patient_controller, consultation_doctor_controller, user_controller, patient_controller, doctor_controller, storage_blockchain_controller
 
 # # Enable SQLAlchemy logging: Shows SQL queries
 # import logging
@@ -34,7 +34,7 @@ app.add_middleware(
 app.include_router(auth_controller.router)
 # app.include_router(patient_router, prefix="/patients", tags=["Patients"])
 # app.include_router(diagnosis_router, prefix="/diagnoses", tags=["Diagnoses"])
-app.include_router(diagnosis_blockchain_controller.router)
+app.include_router(blockchain_consultation_controller.router)
 app.include_router(storage_blockchain_controller.router)
 app.include_router(llm_router, prefix="/llm", tags=["LLM"])
 # app.include_router(diagnosis_router)

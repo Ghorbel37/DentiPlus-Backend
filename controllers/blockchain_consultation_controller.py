@@ -1,6 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
-from services.diagnosis_blockchain_service import add_diagnosis, get_diagnosis, DiagnosisRequest
+from services.blockchain_consultation_service import add_diagnosis, get_diagnosis, DiagnosisRequest
 
 router = APIRouter()
 
