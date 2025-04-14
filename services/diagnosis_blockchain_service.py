@@ -14,11 +14,12 @@ account = ACCOUNT
 # account = w3.eth.accounts[0] # If using HardHat selects first account
 private_key = PRIVATE_KEY
 
-CONTRACT_ABI = [{ "anonymous": False, "inputs": [ { "indexed": True, "internalType": "uint256", "name": "patientId", "type": "uint256" }, { "indexed": False, "internalType": "string", "name": "hash", "type": "string" } ], "name": "DiagnosisRecorded", "type": "event" }, { "inputs": [ { "internalType": "string", "name": "_condition1", "type": "string" }, { "internalType": "uint256", "name": "_confidence1", "type": "uint256" }, { "internalType": "string", "name": "_condition2", "type": "string" }, { "internalType": "uint256", "name": "_confidence2", "type": "uint256" }, { "internalType": "string", "name": "_condition3", "type": "string" }, { "internalType": "uint256", "name": "_confidence3", "type": "uint256" }, { "internalType": "string", "name": "_doctorDiagnosis", "type": "string" }, { "internalType": "uint256", "name": "_patientId", "type": "uint256" } ], "name": "addDiagnosis", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [ { "internalType": "string", "name": "_condition1", "type": "string" }, { "internalType": "uint256", "name": "_confidence1", "type": "uint256" }, { "internalType": "string", "name": "_condition2", "type": "string" }, { "internalType": "uint256", "name": "_confidence2", "type": "uint256" }, { "internalType": "string", "name": "_condition3", "type": "string" }, { "internalType": "uint256", "name": "_confidence3", "type": "uint256" }, { "internalType": "string", "name": "_doctorDiagnosis", "type": "string" }, { "internalType": "uint256", "name": "_patientId", "type": "uint256" } ], "name": "addElementDiagnosis", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "getAllConditions", "outputs": [ { "internalType": "string[]", "name": "", "type": "string[]" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "getAllConfidences", "outputs": [ { "internalType": "uint256[]", "name": "", "type": "uint256[]" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "getAllPatientIds", "outputs": [ { "internalType": "uint256[]", "name": "", "type": "uint256[]" } ], "stateMutability": "view", "type": "function" }, { "inputs": [ { "internalType": "uint256", "name": "index", "type": "uint256" } ], "name": "getDiagnosis", "outputs": [ { "internalType": "string", "name": "", "type": "string" }, { "internalType": "uint256", "name": "", "type": "uint256" }, { "internalType": "string", "name": "", "type": "string" }, { "internalType": "uint256", "name": "", "type": "uint256" }, { "internalType": "string", "name": "", "type": "string" }, { "internalType": "uint256", "name": "", "type": "uint256" }, { "internalType": "string", "name": "", "type": "string" }, { "internalType": "uint256", "name": "", "type": "uint256" }, { "internalType": "uint256", "name": "", "type": "uint256" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "getDiagnosisCount", "outputs": [ { "internalType": "uint256", "name": "", "type": "uint256" } ], "stateMutability": "view", "type": "function" }, { "inputs": [ { "internalType": "uint256", "name": "patientId", "type": "uint256" } ], "name": "getDiagnosisHash", "outputs": [ { "internalType": "string", "name": "", "type": "string" }, { "internalType": "uint256", "name": "", "type": "uint256" } ], "stateMutability": "view", "type": "function" }, { "inputs": [ { "internalType": "uint256", "name": "", "type": "uint256" } ], "name": "offChainDiagnoses", "outputs": [ { "internalType": "string", "name": "hash", "type": "string" }, { "internalType": "uint256", "name": "timestamp", "type": "uint256" } ], "stateMutability": "view", "type": "function" }, { "inputs": [ { "internalType": "uint256", "name": "patientId", "type": "uint256" }, { "internalType": "string", "name": "diagnosisHash", "type": "string" } ], "name": "storeDiagnosisHash", "outputs": [], "stateMutability": "nonpayable", "type": "function" }]
+CONTRACT_ABI = [{ "anonymous": False, "inputs": [ { "indexed": True, "internalType": "uint256", "name": "diagnosisId", "type": "uint256" }, { "indexed": False, "internalType": "uint256", "name": "patientId", "type": "uint256" }, { "indexed": False, "internalType": "uint256", "name": "doctorId", "type": "uint256" } ], "name": "DiagnosisAdded", "type": "event" }, { "anonymous": False, "inputs": [ { "indexed": True, "internalType": "uint256", "name": "diagnosisId", "type": "uint256" }, { "indexed": False, "internalType": "string", "name": "hash", "type": "string" } ], "name": "DiagnosisRecorded", "type": "event" }, { "inputs": [ { "internalType": "uint256", "name": "_diagnosisId", "type": "uint256" }, { "internalType": "string", "name": "_condition1", "type": "string" }, { "internalType": "uint256", "name": "_confidence1", "type": "uint256" }, { "internalType": "string", "name": "_condition2", "type": "string" }, { "internalType": "uint256", "name": "_confidence2", "type": "uint256" }, { "internalType": "string", "name": "_condition3", "type": "string" }, { "internalType": "uint256", "name": "_confidence3", "type": "uint256" }, { "internalType": "string", "name": "_doctorDiagnosis", "type": "string" }, { "internalType": "uint256", "name": "_patientId", "type": "uint256" }, { "internalType": "uint256", "name": "_doctorId", "type": "uint256" } ], "name": "addDiagnosis", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [ { "internalType": "uint256", "name": "diagnosisId", "type": "uint256" } ], "name": "getDiagnosis", "outputs": [ { "internalType": "string", "name": "", "type": "string" }, { "internalType": "uint256", "name": "", "type": "uint256" }, { "internalType": "string", "name": "", "type": "string" }, { "internalType": "uint256", "name": "", "type": "uint256" }, { "internalType": "string", "name": "", "type": "string" }, { "internalType": "uint256", "name": "", "type": "uint256" }, { "internalType": "string", "name": "", "type": "string" }, { "internalType": "uint256", "name": "", "type": "uint256" }, { "internalType": "uint256", "name": "", "type": "uint256" }, { "internalType": "uint256", "name": "", "type": "uint256" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "getDiagnosisCount", "outputs": [ { "internalType": "uint256", "name": "", "type": "uint256" } ], "stateMutability": "view", "type": "function" }, { "inputs": [ { "internalType": "uint256", "name": "diagnosisId", "type": "uint256" } ], "name": "getDiagnosisHash", "outputs": [ { "internalType": "string", "name": "", "type": "string" }, { "internalType": "uint256", "name": "", "type": "uint256" } ], "stateMutability": "view", "type": "function" }, { "inputs": [ { "internalType": "uint256", "name": "diagnosisId", "type": "uint256" }, { "internalType": "string", "name": "diagnosisHash", "type": "string" } ], "name": "storeDiagnosisHash", "outputs": [], "stateMutability": "nonpayable", "type": "function" }]
 
 contract = w3.eth.contract(address=DIAGNOSIS_CONTRACT_ADDRESS, abi=CONTRACT_ABI)
 
 class DiagnosisRequest(BaseModel):
+    diagnosis_id: int
     condition1: str
     confidence1: int
     condition2: str
@@ -27,14 +28,16 @@ class DiagnosisRequest(BaseModel):
     confidence3: int
     doctor_diagnosis: str
     patient_id: int
+    doctor_id: int
 
 def add_diagnosis(diagnosis: DiagnosisRequest):
     """
     Adds a diagnosis to the blockchain
     """
     try:
-        # Build transaction for addDiagnosis
+        # Build transaction for addDiagnosis with all required parameters
         tx = contract.functions.addDiagnosis(
+            diagnosis.diagnosis_id,
             diagnosis.condition1,
             diagnosis.confidence1,
             diagnosis.condition2,
@@ -42,7 +45,8 @@ def add_diagnosis(diagnosis: DiagnosisRequest):
             diagnosis.condition3,
             diagnosis.confidence3,
             diagnosis.doctor_diagnosis,
-            diagnosis.patient_id
+            diagnosis.patient_id,
+            diagnosis.doctor_id
         ).build_transaction({
             "from": account,
             "nonce": w3.eth.get_transaction_count(account),
@@ -52,7 +56,7 @@ def add_diagnosis(diagnosis: DiagnosisRequest):
 
         # Sign and send transaction
         signed_tx = w3.eth.account.sign_transaction(tx, private_key)
-        tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
+        tx_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)
         tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
 
         return {
@@ -62,13 +66,13 @@ def add_diagnosis(diagnosis: DiagnosisRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-def get_diagnosis(index: int):
+def get_diagnosis(diagnosis_id: int):
     """
-    Retrieves a diagnosis from the blockchain by index
+    Retrieves a diagnosis from the blockchain by diagnosis ID
     """
     try:
         # Call getDiagnosis function
-        result = contract.functions.getDiagnosis(index).call()
+        result = contract.functions.getDiagnosis(diagnosis_id).call()
         
         # Structure the response based on the ABI output
         return {
@@ -80,7 +84,8 @@ def get_diagnosis(index: int):
             "confidence3": result[5],
             "doctor_diagnosis": result[6],
             "patient_id": result[7],
-            "timestamp": result[8]
+            "doctor_id": result[8],
+            "timestamp": result[9]
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
