@@ -1,11 +1,12 @@
-from datetime import datetime
+from datetime import datetime, timedelta, time
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import and_
 from dependencies.auth import RoleChecker
 from dependencies.get_db import get_db
 import models
 from schemas.auth_schemas import User as AuthUser
-from schemas.consultation_patient_schemas import Appointment, AppointmentCreate, Consultation, ConsultationListElement, ConsultationCreate, ChatMessageCreate, ChatMessage
+from schemas.consultation_patient_schemas import Appointment, AppointmentCreate, Consultation, ConsultationListElement, ConsultationCreate, ChatMessageCreate, ChatMessage, TimeSlot, UnavailableTimesRequest, UnavailableTimesResponse
 from typing import List
 
 from schemas.llm_service_schemas import ChatRequest
@@ -367,7 +368,7 @@ async def finish_consultation_chat(
     # Step 7: Return the updated consultation
     return consultation
 
-# New endpoint to add an appointment
+# Updated add_appointment endpoint
 @router.post("/{consultation_id}/appointments", response_model=Appointment)
 async def add_appointment(
     consultation_id: int,
@@ -379,6 +380,8 @@ async def add_appointment(
     Create a new appointment for a consultation if:
     - The consultation's etat is RECONSULTATION.
     - No existing appointment is linked to the consultation (checked via consultation.appointment).
+    - The dateAppointment is at a 30-minute interval (e.g., 9:00, 9:30).
+    - The 30-minute time slot is available for the doctor.
     
     Args:
         consultation_id: The ID of the consultation.
@@ -391,7 +394,8 @@ async def add_appointment(
     
     Raises:
         HTTPException: If the consultation is not found, user is not authorized,
-                       etat is not RECONSULTATION, or an appointment already exists.
+                       etat is not RECONSULTATION, appointment exists,
+                       time is not on a 30-minute interval, or slot is unavailable.
     """
     # Step 1: Verify the consultation exists and belongs to the patient
     consultation = db.query(models.Consultation).filter(
@@ -418,18 +422,96 @@ async def add_appointment(
             detail="An appointment is already linked to this consultation"
         )
 
-    # Step 4: Create the new appointment
+    # Step 4: Validate 30-minute interval
+    appointment_time = appointment_data.dateAppointment
+    if appointment_time.minute not in (0, 30):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Appointment time must be on a 30-minute interval (e.g., 9:00, 9:30)"
+        )
+
+    # Step 5: Check for scheduling conflicts
+    appointment_end = appointment_time + timedelta(minutes=30)
+    conflicting_appointments = db.query(models.Appointment).join(
+        models.Consultation, models.Appointment.consultation_id == models.Consultation.id
+    ).filter(
+        models.Consultation.doctor_id == consultation.doctor_id,
+        models.Appointment.etat != models.EtatAppointment.ANNULE,  # Ignore canceled appointments
+        and_(
+            models.Appointment.dateAppointment < appointment_end,
+            models.Appointment.dateAppointment >= appointment_time - timedelta(minutes=30)
+        )
+    ).all()
+
+    if conflicting_appointments:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="The selected time slot is unavailable due to a scheduling conflict"
+        )
+
+    # Step 6: Create the new appointment
     new_appointment = models.Appointment(
         dateCreation=datetime.utcnow(),
-        dateAppointment=appointment_data.dateAppointment,
+        dateAppointment=appointment_time,
         etat=models.EtatAppointment.PLANIFIE,
         consultation_id=consultation_id
     )
 
-    # Step 5: Save to database
+    # Step 7: Save to database
     db.add(new_appointment)
     db.commit()
     db.refresh(new_appointment)
 
-    # Step 6: Return the created appointment
+    # Step 8: Return the created appointment
     return new_appointment
+
+# New endpoint to get unavailable times
+@router.post("/unavailable-times", response_model=UnavailableTimesResponse)
+async def get_unavailable_times(
+    request: UnavailableTimesRequest,
+    current_user: AuthUser = Depends(allow_patient),
+    db: Session = Depends(get_db)
+):
+    """
+    Retrieve unavailable time slots for a doctor on a given date.
+    
+    Args:
+        request: The request body containing the date and doctor_id.
+        current_user: The authenticated patient (via dependency).
+        db: The database session (via dependency).
+    
+    Returns:
+        A list of unavailable time slots (30-minute intervals).
+    
+    Raises:
+        HTTPException: If the doctor is not found.
+    """
+    # Verify the doctor exists
+    doctor = db.query(models.Doctor).filter(models.Doctor.id == request.doctor_id).first()
+    if not doctor:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Doctor not found"
+        )
+
+    # Get start and end of the requested date
+    start_date = datetime.combine(request.date, time(0, 0))
+    end_date = start_date + timedelta(days=1)
+
+    # Fetch all appointments for the doctor on the given date
+    appointments = db.query(models.Appointment).join(
+        models.Consultation, models.Appointment.consultation_id == models.Consultation.id
+    ).filter(
+        models.Consultation.doctor_id == request.doctor_id,
+        models.Appointment.etat != models.EtatAppointment.ANNULE,  # Ignore canceled appointments
+        models.Appointment.dateAppointment >= start_date,
+        models.Appointment.dateAppointment < end_date
+    ).all()
+
+    # Collect unavailable time slots
+    unavailable_times = [
+        TimeSlot(start_time=appointment.dateAppointment)
+        for appointment in appointments
+    ]
+
+    return UnavailableTimesResponse(unavailable_times=unavailable_times)

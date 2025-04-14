@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional, List
 from models import EtatConsultation, EtatAppointment, MessageSenderType
 
@@ -66,3 +66,14 @@ class Appointment(BaseModel):
 
     class Config:
         from_attributes = True
+
+# New schemas for unavailable times
+class UnavailableTimesRequest(BaseModel):
+    date: date
+    doctor_id: int
+
+class TimeSlot(BaseModel):
+    start_time: datetime
+
+class UnavailableTimesResponse(BaseModel):
+    unavailable_times: List[TimeSlot]
