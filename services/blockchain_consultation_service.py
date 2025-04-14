@@ -1,8 +1,8 @@
 """Contains the methods that communicate with the Blockchain"""
 from fastapi import HTTPException
-from pydantic import BaseModel
 from web3 import Web3
 from dependencies.env import BLOCKCHAIN_URL, DIAGNOSIS_CONTRACT_ADDRESS, ACCOUNT, PRIVATE_KEY
+from schemas.blockchain_consultation_schemas import DiagnosisRequest
 
 #Sepolia
 # Configure Web3
@@ -17,18 +17,6 @@ private_key = PRIVATE_KEY
 CONTRACT_ABI = [{ "anonymous": False, "inputs": [ { "indexed": True, "internalType": "uint256", "name": "diagnosisId", "type": "uint256" }, { "indexed": False, "internalType": "uint256", "name": "patientId", "type": "uint256" }, { "indexed": False, "internalType": "uint256", "name": "doctorId", "type": "uint256" } ], "name": "DiagnosisAdded", "type": "event" }, { "anonymous": False, "inputs": [ { "indexed": True, "internalType": "uint256", "name": "diagnosisId", "type": "uint256" }, { "indexed": False, "internalType": "string", "name": "hash", "type": "string" } ], "name": "DiagnosisRecorded", "type": "event" }, { "inputs": [ { "internalType": "uint256", "name": "_diagnosisId", "type": "uint256" }, { "internalType": "string", "name": "_condition1", "type": "string" }, { "internalType": "uint256", "name": "_confidence1", "type": "uint256" }, { "internalType": "string", "name": "_condition2", "type": "string" }, { "internalType": "uint256", "name": "_confidence2", "type": "uint256" }, { "internalType": "string", "name": "_condition3", "type": "string" }, { "internalType": "uint256", "name": "_confidence3", "type": "uint256" }, { "internalType": "string", "name": "_doctorDiagnosis", "type": "string" }, { "internalType": "uint256", "name": "_patientId", "type": "uint256" }, { "internalType": "uint256", "name": "_doctorId", "type": "uint256" } ], "name": "addDiagnosis", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [ { "internalType": "uint256", "name": "diagnosisId", "type": "uint256" } ], "name": "getDiagnosis", "outputs": [ { "internalType": "string", "name": "", "type": "string" }, { "internalType": "uint256", "name": "", "type": "uint256" }, { "internalType": "string", "name": "", "type": "string" }, { "internalType": "uint256", "name": "", "type": "uint256" }, { "internalType": "string", "name": "", "type": "string" }, { "internalType": "uint256", "name": "", "type": "uint256" }, { "internalType": "string", "name": "", "type": "string" }, { "internalType": "uint256", "name": "", "type": "uint256" }, { "internalType": "uint256", "name": "", "type": "uint256" }, { "internalType": "uint256", "name": "", "type": "uint256" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "getDiagnosisCount", "outputs": [ { "internalType": "uint256", "name": "", "type": "uint256" } ], "stateMutability": "view", "type": "function" }, { "inputs": [ { "internalType": "uint256", "name": "diagnosisId", "type": "uint256" } ], "name": "getDiagnosisHash", "outputs": [ { "internalType": "string", "name": "", "type": "string" }, { "internalType": "uint256", "name": "", "type": "uint256" } ], "stateMutability": "view", "type": "function" }, { "inputs": [ { "internalType": "uint256", "name": "diagnosisId", "type": "uint256" }, { "internalType": "string", "name": "diagnosisHash", "type": "string" } ], "name": "storeDiagnosisHash", "outputs": [], "stateMutability": "nonpayable", "type": "function" }]
 
 contract = w3.eth.contract(address=DIAGNOSIS_CONTRACT_ADDRESS, abi=CONTRACT_ABI)
-
-class DiagnosisRequest(BaseModel):
-    diagnosis_id: int
-    condition1: str
-    confidence1: int
-    condition2: str
-    confidence2: int
-    condition3: str
-    confidence3: int
-    doctor_diagnosis: str
-    patient_id: int
-    doctor_id: int
 
 def add_diagnosis(diagnosis: DiagnosisRequest):
     """
