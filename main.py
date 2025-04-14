@@ -2,7 +2,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dependencies.database import engine
 import models
-from controllers.diagnosis_controller import router as diagnosis_router
 from controllers.llm_controller import router as llm_router
 # from controllers.auth_controller import router as auth_router
 from controllers import auth_controller, blockchain_consultation_controller, consultation_patient_controller, consultation_doctor_controller, user_controller, patient_controller, doctor_controller
