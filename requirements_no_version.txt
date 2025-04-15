@@ -8,3 +8,4 @@ web3
 fastapi[standard]
 bcrypt
 pyjwt
+Pillow
