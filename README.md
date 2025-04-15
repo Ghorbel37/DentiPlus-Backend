@@ -23,7 +23,7 @@
    cd dentiplus-backend
 2. **Rename the template file and update variables**:
    ```bash
-   mv .env_template .env
+   cp .env_template .env
 3. **Create and activate virtual environment**:
    ```bash
    python -m venv .venv
