@@ -47,7 +47,7 @@ def update_password(
     }
 
 # New endpoint to get the current logged-in user
-@router.get("/me")
+@router.get("/me", response_model=User)
 async def get_current_user(
     current_user: AuthUser = Depends(get_current_active_user),
     db: Session = Depends(get_db)
