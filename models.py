@@ -35,6 +35,7 @@ class User(Base):
     password = Column(String(255), nullable=False)
     phoneNumber = Column(String(20), nullable=True)
     role = Column(Enum(RoleUser), nullable=False)
+    profile_photo = Column(String(255), nullable=True)
     disabled = Column(Boolean, default=False, nullable=False)
 
     # Relationships
