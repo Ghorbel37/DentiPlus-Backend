@@ -1,5 +1,4 @@
 import os
-import shutil
 import bcrypt
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from fastapi.responses import FileResponse
@@ -10,6 +9,8 @@ from dependencies.get_db import get_db
 import models
 from schemas.auth_schemas import User as AuthUser
 from schemas.user_schemas import User, UserListElement, UserUpdatePassword
+from PIL import Image
+import io
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -94,7 +95,7 @@ def update_password(
         "role": db_user.role
     }
 
-# New endpoint to upload profile photo
+# Updated endpoint to upload, resize, and save as JPEG with size limit
 @router.post("/me/photo", response_model=User)
 async def upload_profile_photo(
     file: UploadFile = File(...),
@@ -102,7 +103,8 @@ async def upload_profile_photo(
     db: Session = Depends(get_db)
 ):
     """
-    Upload or update the profile photo for the current user.
+    Upload or update the profile photo for the current user, resizing it to 200x200 pixels
+    and saving as JPEG. Enforces a 5MB file size limit.
     
     Args:
         file: The uploaded image file (e.g., JPEG, PNG).
@@ -113,7 +115,8 @@ async def upload_profile_photo(
         The updated User object with the profile_photo path.
     
     Raises:
-        HTTPException: If the user is not found or the file type is invalid.
+        HTTPException: If the user is not found, file type is invalid, file is too large,
+                       or processing fails.
     """
     # Validate file type
     allowed_extensions = {".jpg", ".jpeg", ".png"}
@@ -129,16 +132,31 @@ async def upload_profile_photo(
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Generate unique file path (e.g., uploads/user_1_profile.jpg)
-    file_name = f"user_{db_user.id}_profile{file_extension}"
+    # Generate unique file path (always .jpg)
+    file_name = f"user_{db_user.id}_profile.jpg"
     file_path = os.path.join(UPLOAD_DIR, file_name)
 
-    # Save the file
     try:
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+        # Read and check file size
+        contents = await file.read()
+        if len(contents) > 5 * 1024 * 1024:  # 5MB limit
+            raise HTTPException(status_code=400, detail="File too large. Maximum size is 5MB.")
+        
+        # Open the image with Pillow
+        image = Image.open(io.BytesIO(contents))
+        
+        # Convert to RGB (required for JPEG)
+        if image.mode != "RGB":
+            image = image.convert("RGB")
+        
+        # Resize to 200x200, maintaining aspect ratio
+        image.thumbnail((200, 200), Image.Resampling.LANCZOS)
+        
+        # Save as JPEG
+        image.save(file_path, format="JPEG", quality=85)
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to save file: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to process image: {str(e)}")
 
     # Update user's profile_photo path
     db_user.profile_photo = file_path
