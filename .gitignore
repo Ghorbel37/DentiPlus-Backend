@@ -1,6 +1,9 @@
 # Virtual environment (venv)
 .venv/
 
+#Photos folder
+uploads/
+
 # Python cache and compiled files
 __pycache__/
 *.py[cod]
