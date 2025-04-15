@@ -2,12 +2,17 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from dependencies.get_db import get_db
 from services.blockchain_consultation_service import add_diagnosis, get_diagnosis, DiagnosisRequest
+from schemas.auth_schemas import User as AuthUser
+from dependencies.auth import get_current_active_user
 import models
 
 router = APIRouter(prefix="/blockchain", tags=["Blockchain"])
 
 @router.post("/add-diagnosis")
-async def add_diagnosis_blockchain(diagnosis: DiagnosisRequest):
+async def add_diagnosis_blockchain(
+    diagnosis: DiagnosisRequest,
+    current_user: AuthUser = Depends(get_current_active_user)
+    ):
     """
     Adds a diagnosis to the blockchain.
     """
@@ -24,7 +29,10 @@ async def add_diagnosis_blockchain(diagnosis: DiagnosisRequest):
         raise HTTPException(status_code=500, detail=f"Failed to add diagnosis: {str(e)}")
 
 @router.get("/get-diagnosis/{diagnosis_id}")
-async def get_diagnosis_blockchain(diagnosis_id: int):
+async def get_diagnosis_blockchain(
+    diagnosis_id: int,
+    current_user: AuthUser = Depends(get_current_active_user)
+    ):
     """
     Retrieves a diagnosis from the blockchain by diagnosis ID.
     """
@@ -40,7 +48,10 @@ async def get_diagnosis_blockchain(diagnosis_id: int):
         raise HTTPException(status_code=500, detail=f"Failed to retrieve diagnosis: {str(e)}")
     
 @router.get("/verify-integrity/{consultation_id}")
-async def verify_consultation_integrity(consultation_id: int, db: Session = Depends(get_db)):
+async def verify_consultation_integrity(
+    consultation_id: int,
+    current_user: AuthUser = Depends(get_current_active_user),
+    db: Session = Depends(get_db)):
     """
     Verifies consultation integrity by comparing database and blockchain data.
     """
