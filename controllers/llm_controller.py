@@ -4,7 +4,7 @@ from services.llm_service import diagnose_patient_en, diagnose_patient_fr
 from schemas.auth_schemas import User as AuthUser
 from dependencies.auth import get_current_active_user
 
-router = APIRouter()
+router = APIRouter(prefix="/llm", tags=["LLM"])
 
 @router.post("/diagnose-en")
 def diagnose_en(
