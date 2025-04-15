@@ -4,7 +4,7 @@ from dependencies.get_db import get_db
 from services.blockchain_consultation_service import add_diagnosis, get_diagnosis, DiagnosisRequest
 import models
 
-router = APIRouter()
+router = APIRouter(prefix="/blockchain", tags=["Blockchain"])
 
 @router.post("/add-diagnosis")
 async def add_diagnosis_blockchain(diagnosis: DiagnosisRequest):
