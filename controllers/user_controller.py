@@ -89,11 +89,7 @@ def update_password(
     db.commit()
     db.refresh(db_user)
 
-    return {
-        "email": db_user.email,
-        "name": db_user.name,
-        "role": db_user.role
-    }
+    return db_user
 
 # Updated endpoint to upload, resize, and save as JPEG with size limit
 @router.post("/me/photo", response_model=User)
