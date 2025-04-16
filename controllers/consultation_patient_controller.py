@@ -57,38 +57,38 @@ async def create_consultation(
 
     return new_consultation
 
-@router.post("/{consultation_id}/messages", response_model=ChatMessage)
-async def add_chat_message(
-    consultation_id: int,
-    message_data: ChatMessageCreate,
-    current_user: AuthUser = Depends(allow_patient),
-    db: Session = Depends(get_db)
-):
-    # Verify the consultation exists and belongs to the patient
-    consultation = db.query(models.Consultation).filter(
-        models.Consultation.id == consultation_id,
-        models.Consultation.patient_id == current_user.id
-    ).first()
-    if not consultation:
-        raise HTTPException(status_code=404, detail="Consultation not found or not authorized")
+# @router.post("/{consultation_id}/messages", response_model=ChatMessage)
+# async def add_chat_message(
+#     consultation_id: int,
+#     message_data: ChatMessageCreate,
+#     current_user: AuthUser = Depends(allow_patient),
+#     db: Session = Depends(get_db)
+# ):
+#     # Verify the consultation exists and belongs to the patient
+#     consultation = db.query(models.Consultation).filter(
+#         models.Consultation.id == consultation_id,
+#         models.Consultation.patient_id == current_user.id
+#     ).first()
+#     if not consultation:
+#         raise HTTPException(status_code=404, detail="Consultation not found or not authorized")
 
-    # Create a new chat message
-    new_message = models.ChatMessage(
-        consultation_id=consultation_id,
-        content=message_data.content,
-        sender_type=models.MessageSenderType.USER  # Patient is the sender
-    )
-    db.add(new_message)
+#     # Create a new chat message
+#     new_message = models.ChatMessage(
+#         consultation_id=consultation_id,
+#         content=message_data.content,
+#         sender_type=models.MessageSenderType.USER  # Patient is the sender
+#     )
+#     db.add(new_message)
 
-    # Send message to LLM and return response from the model
+#     # Send message to LLM and return response from the model
 
-    # Save the LLM response in the db and commit
-    db.commit()
-    db.refresh(new_message)
+#     # Save the LLM response in the db and commit
+#     db.commit()
+#     db.refresh(new_message)
 
-    # Return the LLM response
+#     # Return the LLM response
 
-    return new_message
+#     return new_message
 
 @router.get("/{consultation_id}", response_model=Consultation)
 async def get_consultation(
