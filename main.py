@@ -30,7 +30,7 @@ app.add_middleware(
 # Include routers from controllers
 app.include_router(auth_controller.router)
 app.include_router(blockchain_consultation_controller.router)
-app.include_router(llm_controller.router)
+# app.include_router(llm_controller.router)
 app.include_router(consultation_patient_controller.router)
 app.include_router(consultation_doctor_controller.router)
 app.include_router(user_controller.router)
