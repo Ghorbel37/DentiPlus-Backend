@@ -82,6 +82,73 @@ async def get_doctor_consultations_by_etat(
         )
     return consultations
 
+@router.get("/consultations/{consultation_id}", response_model=ConsultationDetailed)
+async def get_consultation_by_id(
+    consultation_id: int,
+    current_user: AuthUser = Depends(allow_doctor),
+    db: Session = Depends(get_db)
+):
+    """
+    Retrieve a consultation by ID, including patient information, symptoms, and conditions.
+    
+    Args:
+        consultation_id: The ID of the consultation to retrieve.
+        current_user: The authenticated doctor (via dependency).
+        db: The database session (via dependency).
+    
+    Returns:
+        A ConsultationDetailed object with patient, symptoms, and conditions.
+    
+    Raises:
+        HTTPException: If the consultation is not found or not authorized.
+    """
+    consultation = db.query(models.Consultation).options(
+        joinedload(models.Consultation.patient).joinedload(models.Patient.user),
+        joinedload(models.Consultation.symptoms),
+        joinedload(models.Consultation.hypotheses),
+        joinedload(models.Consultation.chat_messages)
+    ).filter(
+        models.Consultation.id == consultation_id,
+        models.Consultation.doctor_id == current_user.id
+    ).first()
+
+    if not consultation:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Consultation not found or not authorized"
+        )
+
+    # Manually construct the PatientInfo to flatten patient and user data
+    patient_info = PatientInfo(
+        id=consultation.patient.id,
+        name=consultation.patient.user.name,
+        email=consultation.patient.user.email,
+        adress=consultation.patient.user.adress,
+        birthdate=consultation.patient.user.birthdate,
+        phoneNumber=consultation.patient.user.phoneNumber,
+        calories=consultation.patient.calories,
+        frequenceCardiaque=consultation.patient.frequenceCardiaque,
+        poids=consultation.patient.poids
+    )
+
+    # Construct the ConsultationDetailed response
+    consultation_detailed = ConsultationDetailed(
+        id=consultation.id,
+        date=consultation.date,
+        diagnosis=consultation.diagnosis,
+        chat_summary=consultation.chat_summary,
+        doctor_note=consultation.doctor_note,
+        etat=consultation.etat,
+        fraisAdministratives=consultation.fraisAdministratives,
+        prix=consultation.prix,
+        patient=patient_info,
+        symptoms=consultation.symptoms,
+        hypotheses=consultation.hypotheses,
+        chat_messages=consultation.chat_messages
+    )
+
+    return consultation_detailed
+
 @router.post("/consultations/{consultation_id}/validate", response_model=Consultation)
 async def validate_consultation(
     consultation_id: int,
@@ -244,70 +311,3 @@ async def mark_reconsultation(
     db.refresh(consultation)
 
     return consultation
-
-@router.get("/consultations/{consultation_id}", response_model=ConsultationDetailed)
-async def get_consultation_by_id(
-    consultation_id: int,
-    current_user: AuthUser = Depends(allow_doctor),
-    db: Session = Depends(get_db)
-):
-    """
-    Retrieve a consultation by ID, including patient information, symptoms, and conditions.
-    
-    Args:
-        consultation_id: The ID of the consultation to retrieve.
-        current_user: The authenticated doctor (via dependency).
-        db: The database session (via dependency).
-    
-    Returns:
-        A ConsultationDetailed object with patient, symptoms, and conditions.
-    
-    Raises:
-        HTTPException: If the consultation is not found or not authorized.
-    """
-    consultation = db.query(models.Consultation).options(
-        joinedload(models.Consultation.patient).joinedload(models.Patient.user),
-        joinedload(models.Consultation.symptoms),
-        joinedload(models.Consultation.hypotheses),
-        joinedload(models.Consultation.chat_messages)
-    ).filter(
-        models.Consultation.id == consultation_id,
-        models.Consultation.doctor_id == current_user.id
-    ).first()
-
-    if not consultation:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Consultation not found or not authorized"
-        )
-
-    # Manually construct the PatientInfo to flatten patient and user data
-    patient_info = PatientInfo(
-        id=consultation.patient.id,
-        name=consultation.patient.user.name,
-        email=consultation.patient.user.email,
-        adress=consultation.patient.user.adress,
-        birthdate=consultation.patient.user.birthdate,
-        phoneNumber=consultation.patient.user.phoneNumber,
-        calories=consultation.patient.calories,
-        frequenceCardiaque=consultation.patient.frequenceCardiaque,
-        poids=consultation.patient.poids
-    )
-
-    # Construct the ConsultationDetailed response
-    consultation_detailed = ConsultationDetailed(
-        id=consultation.id,
-        date=consultation.date,
-        diagnosis=consultation.diagnosis,
-        chat_summary=consultation.chat_summary,
-        doctor_note=consultation.doctor_note,
-        etat=consultation.etat,
-        fraisAdministratives=consultation.fraisAdministratives,
-        prix=consultation.prix,
-        patient=patient_info,
-        symptoms=consultation.symptoms,
-        hypotheses=consultation.hypotheses,
-        chat_messages=consultation.chat_messages
-    )
-
-    return consultation_detailed
