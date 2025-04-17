@@ -18,10 +18,14 @@ async def add_diagnosis_blockchain(
     """
     try:
         result = add_diagnosis(diagnosis)
+        if result["status"] == 0:
+            raise HTTPException(
+                status_code=400,
+                detail="Diagnosis could not be added to the blockchain: Transaction failed"
+            )
         return {
-            "message": "Diagnosis added successfully",
             "transaction_hash": result["transaction_hash"],
-            "status": "Success" if result["status"] == 1 else "Failed"
+            "status": result["status"]
         }
     except HTTPException as e:
         raise e
