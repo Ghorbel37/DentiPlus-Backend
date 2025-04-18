@@ -72,9 +72,9 @@ def get_diagnosis(diagnosis_id: int):
             "condition3": result[5],
             "confidence3": result[6],
             "doctor_diagnosis": result[7],
-            "patient_id": result[8],
-            "doctor_id": result[9],
-            "timestamp": result[10]
+            "timestamp": result[8],
+            "patient_id": result[9],
+            "doctor_id": result[10]
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
