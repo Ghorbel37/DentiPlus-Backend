@@ -89,3 +89,15 @@ class ConsultationDetailed(BaseModel):
 
     class Config:
         from_attributes = True
+
+class BlockchainDiagnosisRequest(BaseModel):
+    diagnosis_id: int
+    patient_id: int
+    doctor_id: int
+    doctor_diagnosis: str
+    condition1: str = ""
+    confidence1: int = 0
+    condition2: str = ""
+    confidence2: int = 0
+    condition3: str = ""
+    confidence3: int = 0

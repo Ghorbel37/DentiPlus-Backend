@@ -1,12 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.background import BackgroundTasks
 from sqlalchemy.orm import Session, joinedload
 from dependencies.auth import RoleChecker
 from dependencies.get_db import get_db
 import models
 from schemas.auth_schemas import User as AuthUser
-from schemas.consultation_doctor_schemas import Consultation, ConsultationDetailed, ConsultationListElement, DoctorNoteUpdate, PatientInfo
+from schemas.consultation_doctor_schemas import Consultation, ConsultationDetailed, ConsultationListElement, BlockchainDiagnosisRequest, DoctorNoteUpdate, PatientInfo
 from typing import List
 
+from services.blockchain_consultation_service import add_diagnosis
 from services.llm_service import improve_doctor_note
 
 router = APIRouter(prefix="/consultation-doctor", tags=["Consultation Doctor"])
@@ -149,30 +151,45 @@ async def get_consultation_by_id(
 
     return consultation_detailed
 
+async def add_diagnosis_to_blockchain(diagnosis_data: BlockchainDiagnosisRequest, db: Session):
+    """
+    Adds a diagnosis to the blockchain and handles errors with database rollback.
+    
+    Args:
+        diagnosis_data: The diagnosis data to add to the blockchain.
+        db: The database session for rollback in case of failure.
+    
+    Raises:
+        HTTPException: If the blockchain transaction fails.
+    """
+    try:
+        result = add_diagnosis(diagnosis_data)
+        if result["status"] == 0:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Diagnosis could not be added to the blockchain: Transaction failed"
+            )
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to add diagnosis to blockchain: {str(e)}"
+        )
+
 @router.post("/consultations/{consultation_id}/validate", response_model=Consultation)
 async def validate_consultation(
     consultation_id: int,
     note_data: DoctorNoteUpdate,
+    background_tasks: BackgroundTasks,
     current_user: AuthUser = Depends(allow_doctor),
     db: Session = Depends(get_db)
 ):
     """
-    Validate a consultation by setting etat to VALIDE and adding an improved doctor_note,
-    but only if the current etat is EN_ATTENTE.
-    
-    Args:
-        consultation_id: The ID of the consultation to validate.
-        note_data: The request body containing the doctor_note.
-        current_user: The authenticated doctor (via dependency).
-        db: The database session (via dependency).
-    
-    Returns:
-        The updated Consultation object.
-    
-    Raises:
-        HTTPException: If the consultation is not found, not authorized,
-                       etat is not EN_ATTENTE, or LLM processing fails.
+    Validate a consultation by setting etat to VALIDE, updating the doctor_note,
+    and adding the diagnosis to the blockchain.
     """
+    # Fetch consultation
     consultation = db.query(models.Consultation).filter(
         models.Consultation.id == consultation_id,
         models.Consultation.doctor_id == current_user.id
@@ -200,14 +217,13 @@ async def validate_consultation(
 
     # Convert to list of dictionaries for LLM
     chat_history = [
-        {"role": map_sender_to_role(msg.sender_type), "content": msg.content}  # Assuming sender_type is 'user' or 'assistant'
+        {"role": map_sender_to_role(msg.sender_type), "content": msg.content}
         for msg in chat_history_db
     ]
 
-    # Check if doctor_note is empty
+    # Improve doctor's note if provided
     improved_note = None
     if note_data.doctor_note and note_data.doctor_note.strip():
-        # Improve the doctor’s note using the LLM
         try:
             improved_note = improve_doctor_note(
                 etat=models.EtatConsultation.VALIDE.value,
@@ -223,11 +239,28 @@ async def validate_consultation(
     # Update consultation
     consultation.etat = models.EtatConsultation.VALIDE
     consultation.doctor_note = note_data.doctor_note
-    consultation.diagnosis = improved_note
-
+    consultation.diagnosis = improved_note or consultation.diagnosis
     db.add(consultation)
     db.commit()
     db.refresh(consultation)
+
+    # Construct BlockchainDiagnosisRequest for blockchain
+    hypotheses = consultation.hypotheses or []
+    diagnosis_data = BlockchainDiagnosisRequest(
+        diagnosis_id=consultation.id,
+        patient_id=consultation.patient_id,
+        doctor_id=consultation.doctor_id,
+        doctor_diagnosis=consultation.diagnosis or "",
+        condition1=hypotheses[0].condition if len(hypotheses) > 0 else "",
+        confidence1=hypotheses[0].confidence if len(hypotheses) > 0 else 0,
+        condition2=hypotheses[1].condition if len(hypotheses) > 1 else "",
+        confidence2=hypotheses[1].confidence if len(hypotheses) > 1 else 0,
+        condition3=hypotheses[2].condition if len(hypotheses) > 2 else "",
+        confidence3=hypotheses[2].confidence if len(hypotheses) > 2 else 0
+    )
+
+    # Schedule blockchain operation
+    background_tasks.add_task(add_diagnosis_to_blockchain, diagnosis_data, db)
 
     return consultation
 
@@ -235,26 +268,15 @@ async def validate_consultation(
 async def mark_reconsultation(
     consultation_id: int,
     note_data: DoctorNoteUpdate,
+    background_tasks: BackgroundTasks,
     current_user: AuthUser = Depends(allow_doctor),
     db: Session = Depends(get_db)
 ):
     """
-    Mark a consultation for reconsultation by setting etat to RECONSULTATION and adding an improved doctor_note,
-    but only if the current etat is EN_ATTENTE.
-    
-    Args:
-        consultation_id: The ID of the consultation to mark.
-        note_data: The request body containing the doctor_note.
-        current_user: The authenticated doctor (via dependency).
-        db: The database session (via dependency).
-    
-    Returns:
-        The updated Consultation object.
-    
-    Raises:
-        HTTPException: If the consultation is not found, not authorized,
-                       etat is not EN_ATTENTE, or LLM processing fails.
+    Mark a consultation for reconsultation by setting etat to RECONSULTATION, updating the doctor_note,
+    and adding the diagnosis to the blockchain.
     """
+    # Fetch consultation
     consultation = db.query(models.Consultation).filter(
         models.Consultation.id == consultation_id,
         models.Consultation.doctor_id == current_user.id
@@ -282,14 +304,13 @@ async def mark_reconsultation(
 
     # Convert to list of dictionaries for LLM
     chat_history = [
-        {"role": map_sender_to_role(msg.sender_type), "content": msg.content}  # Assuming sender_type is 'user' or 'assistant'
+        {"role": map_sender_to_role(msg.sender_type), "content": msg.content}
         for msg in chat_history_db
     ]
 
-    # Check if doctor_note is empty
+    # Improve doctor's note if provided
     improved_note = None
     if note_data.doctor_note and note_data.doctor_note.strip():
-        # Improve the doctor’s note using the LLM
         try:
             improved_note = improve_doctor_note(
                 etat=models.EtatConsultation.RECONSULTATION.value,
@@ -305,9 +326,27 @@ async def mark_reconsultation(
     # Update consultation
     consultation.etat = models.EtatConsultation.RECONSULTATION
     consultation.doctor_note = note_data.doctor_note
-    consultation.diagnosis = improved_note
+    consultation.diagnosis = improved_note or consultation.diagnosis
     db.add(consultation)
     db.commit()
     db.refresh(consultation)
+
+    # Construct BlockchainDiagnosisRequest for blockchain
+    hypotheses = consultation.hypotheses or []
+    diagnosis_data = BlockchainDiagnosisRequest(
+        diagnosis_id=consultation.id,
+        patient_id=consultation.patient_id,
+        doctor_id=consultation.doctor_id,
+        doctor_diagnosis=consultation.diagnosis or "",
+        condition1=hypotheses[0].condition if len(hypotheses) > 0 else "",
+        confidence1=hypotheses[0].confidence if len(hypotheses) > 0 else 0,
+        condition2=hypotheses[1].condition if len(hypotheses) > 1 else "",
+        confidence2=hypotheses[1].confidence if len(hypotheses) > 1 else 0,
+        condition3=hypotheses[2].condition if len(hypotheses) > 2 else "",
+        confidence3=hypotheses[2].confidence if len(hypotheses) > 2 else 0
+    )
+
+    # Schedule blockchain operation
+    background_tasks.add_task(add_diagnosis_to_blockchain, diagnosis_data, db)
 
     return consultation
