@@ -167,6 +167,8 @@ def map_sender_to_role(sender_type: models.MessageSenderType) -> str:
         return "user"
     elif sender_type == models.MessageSenderType.ASSISTANT:
         return "assistant"
+    elif sender_type == models.MessageSenderType.DOCTOR:
+        return "doctor"
     else:
         return "system"  # Default fallback
 

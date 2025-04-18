@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.background import BackgroundTasks
 from sqlalchemy.orm import Session, joinedload
@@ -22,6 +23,8 @@ def map_sender_to_role(sender_type: models.MessageSenderType) -> str:
         return "user"
     elif sender_type == models.MessageSenderType.ASSISTANT:
         return "assistant"
+    elif sender_type == models.MessageSenderType.DOCTOR:
+        return "doctor"
     else:
         return "system"  # Default fallback
 
@@ -187,7 +190,7 @@ async def validate_consultation(
 ):
     """
     Validate a consultation by setting etat to VALIDE, updating the doctor_note,
-    and adding the diagnosis to the blockchain.
+    adding the doctor_note to the chat history with role=DOCTOR, and adding the diagnosis to the blockchain.
     """
     # Fetch consultation
     consultation = db.query(models.Consultation).filter(
@@ -240,6 +243,16 @@ async def validate_consultation(
     consultation.etat = models.EtatConsultation.VALIDE
     consultation.doctor_note = note_data.doctor_note
     consultation.diagnosis = improved_note or consultation.diagnosis
+
+    # Add doctor_note to chat history as a ChatMessage with role=DOCTOR
+    if note_data.doctor_note and note_data.doctor_note.strip():
+        doctor_message = models.ChatMessage(
+            consultation_id=consultation_id,
+            content=improved_note,
+            sender_type=models.MessageSenderType.DOCTOR
+        )
+        db.add(doctor_message)
+
     db.add(consultation)
     db.commit()
     db.refresh(consultation)
@@ -274,7 +287,7 @@ async def mark_reconsultation(
 ):
     """
     Mark a consultation for reconsultation by setting etat to RECONSULTATION, updating the doctor_note,
-    and adding the diagnosis to the blockchain.
+    adding the doctor_note to the chat history with role=DOCTOR, and adding the diagnosis to the blockchain.
     """
     # Fetch consultation
     consultation = db.query(models.Consultation).filter(
@@ -327,6 +340,16 @@ async def mark_reconsultation(
     consultation.etat = models.EtatConsultation.RECONSULTATION
     consultation.doctor_note = note_data.doctor_note
     consultation.diagnosis = improved_note or consultation.diagnosis
+
+    # Add doctor_note to chat history as a ChatMessage with role=DOCTOR
+    if note_data.doctor_note and note_data.doctor_note.strip():
+        doctor_message = models.ChatMessage(
+            consultation_id=consultation_id,
+            content=improved_note,
+            sender_type=models.MessageSenderType.DOCTOR
+        )
+        db.add(doctor_message)
+
     db.add(consultation)
     db.commit()
     db.refresh(consultation)
