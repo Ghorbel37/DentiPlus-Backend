@@ -91,6 +91,34 @@ async def create_consultation(
 
 #     return new_message
 
+# New endpoint to get all patient appointments
+@router.get("/appointments", response_model=List[Appointment])
+async def get_all_patient_appointments(
+    current_user: AuthUser = Depends(allow_patient),
+    db: Session = Depends(get_db)
+):
+    """
+    Retrieve all appointments associated with the authenticated patient.
+    
+    Args:
+        current_user: The authenticated patient (via dependency).
+        db: The database session (via dependency).
+    
+    Returns:
+        A list of Appointment objects.
+    
+    Raises:
+        HTTPException: If no appointments are found.
+    """
+    appointments = db.query(models.Appointment).join(
+        models.Consultation, models.Appointment.consultation_id == models.Consultation.id
+    ).filter(
+        models.Consultation.patient_id == current_user.id
+    ).all()
+    if not appointments:
+        raise HTTPException(status_code=404, detail="No appointments found")
+    return appointments
+
 @router.get("/{consultation_id}", response_model=Consultation)
 async def get_consultation(
     consultation_id: int,
