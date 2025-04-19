@@ -496,6 +496,138 @@ async def add_appointment(
     # Step 8: Return the created appointment
     return new_appointment
 
+# New endpoint to change appointment time
+@router.post("/appointments/{appointment_id}/time", response_model=Appointment)
+async def change_appointment_time(
+    appointment_id: int,
+    appointment_data: AppointmentCreate,
+    current_user: AuthUser = Depends(allow_patient),
+    db: Session = Depends(get_db)
+):
+    """
+    Change the time of an existing appointment if:
+    - The appointment exists and belongs to the patient's consultation.
+    - The new dateAppointment is at the start of an hour (e.g., 9:00, 10:00).
+    - The one-hour time slot is available for the doctor (no other PLANIFIE appointments).
+    
+    Args:
+        appointment_id: The ID of the appointment to update.
+        appointment_data: The request body containing the new dateAppointment.
+        current_user: The authenticated patient (via dependency).
+        db: The database session (via dependency).
+    
+    Returns:
+        The updated Appointment object.
+    
+    Raises:
+        HTTPException: If the appointment is not found, user is not authorized,
+                       time is not at the start of an hour, or slot is unavailable.
+    """
+    # Step 1: Verify the appointment exists and belongs to the patient
+    appointment = db.query(models.Appointment).join(
+        models.Consultation, models.Appointment.consultation_id == models.Consultation.id
+    ).filter(
+        models.Appointment.id == appointment_id,
+        models.Consultation.patient_id == current_user.id
+    ).first()
+    if not appointment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Appointment not found or not authorized"
+        )
+
+    # Step 2: Validate hourly interval
+    new_time = appointment_data.dateAppointment
+    if new_time.minute != 0 or new_time.second != 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="New appointment time must be at the start of an hour (e.g., 9:00, 10:00)"
+        )
+
+    # Step 3: Check for scheduling conflicts
+    appointment_end = new_time + timedelta(hours=1)
+    conflicting_appointments = db.query(models.Appointment).join(
+        models.Consultation, models.Appointment.consultation_id == models.Consultation.id
+    ).filter(
+        models.Consultation.doctor_id == appointment.consultation.doctor_id,
+        models.Appointment.etat == models.EtatAppointment.PLANIFIE,
+        models.Appointment.id != appointment_id,  # Exclude the current appointment
+        and_(
+            models.Appointment.dateAppointment < appointment_end,
+            models.Appointment.dateAppointment >= new_time
+        )
+    ).all()
+
+    if conflicting_appointments:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="The selected time slot is unavailable due to a scheduling conflict"
+        )
+
+    # Step 4: Update the appointment time
+    appointment.dateAppointment = new_time
+
+    # Step 5: Save to database
+    db.add(appointment)
+    db.commit()
+    db.refresh(appointment)
+
+    # Step 6: Return the updated appointment
+    return appointment
+
+# New endpoint to cancel appointment
+@router.post("/appointments/{appointment_id}/cancel", response_model=Appointment)
+async def cancel_appointment(
+    appointment_id: int,
+    current_user: AuthUser = Depends(allow_patient),
+    db: Session = Depends(get_db)
+):
+    """
+    Cancel an appointment by setting its etat to ANNULE.
+    
+    Args:
+        appointment_id: The ID of the appointment to cancel.
+        current_user: The authenticated patient (via dependency).
+        db: The database session (via dependency).
+    
+    Returns:
+        The updated Appointment object.
+    
+    Raises:
+        HTTPException: If the appointment is not found, user is not authorized,
+                       or the appointment is already canceled.
+    """
+    # Step 1: Verify the appointment exists and belongs to the patient
+    appointment = db.query(models.Appointment).join(
+        models.Consultation, models.Appointment.consultation_id == models.Consultation.id
+    ).filter(
+        models.Appointment.id == appointment_id,
+        models.Consultation.patient_id == current_user.id
+    ).first()
+    if not appointment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Appointment not found or not authorized"
+        )
+
+    # Step 2: Check if the appointment is already canceled
+    if appointment.etat == models.EtatAppointment.ANNULE:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Appointment is already canceled"
+        )
+
+    # Step 3: Update the appointment status
+    appointment.etat = models.EtatAppointment.ANNULE
+
+    # Step 4: Save to database
+    db.add(appointment)
+    db.commit()
+    db.refresh(appointment)
+
+    # Step 5: Return the updated appointment
+    return appointment
+
 # Updated get_unavailable_times endpoint (hourly intervals, single doctor)
 @router.post("/unavailable-times", response_model=UnavailableTimesResponse)
 async def get_unavailable_times(
