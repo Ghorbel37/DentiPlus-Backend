@@ -210,6 +210,7 @@ async def send_message_to_consultation(
 ):
     """
     Handle a user message in a consultation chat:
+    - Verify the consultation is in EN_COURS state.
     - Prepare the user's message and fetch chat history.
     - Send to the LLM and await response.
     - Save both user message and LLM response to the database only after successful LLM response.
@@ -226,7 +227,7 @@ async def send_message_to_consultation(
     
     Raises:
         HTTPException: If the consultation is not found, user is not authorized,
-                       or if there’s an error communicating with the LLM.
+                       consultation is not EN_COURS, or if there’s an error communicating with the LLM.
     """
     # Step 1: Verify the consultation exists and belongs to the patient
     consultation = db.query(models.Consultation).filter(
@@ -239,7 +240,14 @@ async def send_message_to_consultation(
             detail="Consultation not found or not authorized"
         )
 
-    # Step 2: Prepare user message in memory (don’t save yet)
+    # Step 2: Check if consultation etat is EN_COURS
+    if consultation.etat != models.EtatConsultation.EN_COURS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Consultation must be in EN_COURS state to send messages"
+        )
+
+    # Step 3: Prepare user message in memory (don’t save yet)
     message = request.message
     user_message_dict = {"role": "user", "content": message}
     user_message_db = models.ChatMessage(
@@ -248,7 +256,7 @@ async def send_message_to_consultation(
         sender_type=models.MessageSenderType.USER
     )
 
-    # Step 3: Fetch the full chat history
+    # Step 4: Fetch the full chat history
     chat_history_db = db.query(models.ChatMessage).filter(
         models.ChatMessage.consultation_id == consultation_id
     ).order_by(models.ChatMessage.timestamp.asc()).all()
@@ -262,7 +270,7 @@ async def send_message_to_consultation(
     # Append the user’s new message to the chat history for LLM
     chat_history.append(user_message_dict)
 
-    # Step 4: Send chat history to LLM and get response
+    # Step 5: Send chat history to LLM and get response
     try:
         llm_response = chat_with_model(chat_history)
     except Exception as e:
@@ -271,7 +279,7 @@ async def send_message_to_consultation(
             detail=f"Error communicating with LLM: {str(e)}"
         )
 
-    # Step 5: Prepare LLM response in memory
+    # Step 6: Prepare LLM response in memory
     assistant_message_dict = {"role": "assistant", "content": llm_response}
     assistant_message_db = models.ChatMessage(
         consultation_id=consultation_id,
@@ -279,14 +287,14 @@ async def send_message_to_consultation(
         sender_type=models.MessageSenderType.ASSISTANT
     )
 
-    # Step 6: Save both messages to the database only after successful LLM response
+    # Step 7: Save both messages to the database only after successful LLM response
     db.add(user_message_db)
     db.add(assistant_message_db)
     db.commit()
     db.refresh(user_message_db)
     db.refresh(assistant_message_db)
 
-    # Step 7: Return the LLM’s response
+    # Step 8: Return the LLM’s response
     return llm_response
 
 @router.post("/{consultation_id}/finish", response_model=Consultation)
