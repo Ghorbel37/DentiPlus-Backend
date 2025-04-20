@@ -454,11 +454,11 @@ async def add_appointment(
             detail="Consultation must be in RECONSULTATION state to add an appointment"
         )
 
-    # Step 3: Check if an appointment already exists using consultation.appointment
-    if consultation.appointment:
+    # Step 3: Check if a PLANIFIE appointment already exists
+    if consultation.appointment and consultation.appointment.etat == models.EtatAppointment.PLANIFIE:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="An appointment is already linked to this consultation"
+            detail="A PLANIFIE appointment is already linked to this consultation"
         )
 
     # Step 4: Validate hourly interval
