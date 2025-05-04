@@ -33,10 +33,40 @@ async def create_consultation(
     current_user: AuthUser = Depends(allow_patient),
     db: Session = Depends(get_db)
 ):
+    """
+    Create a new consultation for the authenticated patient, or return an existing
+    EN_COURS consultation with no chat history if one exists.
+    
+    Args:
+        consultation_data: The request body containing consultation details.
+        current_user: The authenticated patient (via dependency).
+        db: The database session (via dependency).
+    
+    Returns:
+        The existing or newly created Consultation object.
+    
+    Raises:
+        HTTPException: If the patient or doctor is not found.
+    """
     # Get patient from the current user
     patient = db.query(models.Patient).filter(models.Patient.id == current_user.id).first()
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found for this user")
+
+    # Check for existing EN_COURS consultation with no chat history
+    existing_consultation = db.query(models.Consultation).filter(
+        models.Consultation.patient_id == current_user.id,
+        models.Consultation.etat == models.EtatConsultation.EN_COURS
+    ).join(
+        models.ChatMessage,
+        models.Consultation.id == models.ChatMessage.consultation_id,
+        isouter=True
+    ).filter(
+        models.ChatMessage.id == None
+    ).first()
+
+    if existing_consultation:
+        return existing_consultation
 
     # Get the single doctor
     doctor = get_single_doctor(db)
