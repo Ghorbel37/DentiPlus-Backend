@@ -455,7 +455,11 @@ async def add_appointment(
         )
 
     # Step 3: Check if a PLANIFIE appointment already exists
-    if consultation.appointment and consultation.appointment.etat == models.EtatAppointment.PLANIFIE:
+    planifie_appointment = db.query(models.Appointment).filter(
+        models.Appointment.consultation_id == consultation_id,
+        models.Appointment.etat == models.EtatAppointment.PLANIFIE
+    ).first()
+    if planifie_appointment:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="A PLANIFIE appointment is already linked to this consultation"
