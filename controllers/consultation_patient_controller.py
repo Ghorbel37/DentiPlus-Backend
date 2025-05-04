@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, time
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from sqlalchemy import and_
+from sqlalchemy import and_, not_
 from dependencies.auth import RoleChecker
 from dependencies.get_db import get_db
 import models
@@ -118,6 +118,43 @@ async def get_all_patient_appointments(
     if not appointments:
         raise HTTPException(status_code=404, detail="No appointments found")
     return appointments
+
+@router.get("/reconsultations/available", response_model=List[ConsultationListElement])
+async def get_reconsultations_without_planifie(
+    current_user: AuthUser = Depends(allow_patient),
+    db: Session = Depends(get_db)
+):
+    """
+    Retrieve all consultations for the authenticated patient that:
+    - Have etat=RECONSULTATION.
+    - Have no appointments or only appointments with etat != PLANIFIE.
+    
+    Args:
+        current_user: The authenticated patient (via dependency).
+        db: The database session (via dependency).
+    
+    Returns:
+        A list of consultations matching the criteria.
+    
+    Raises:
+        HTTPException: If no consultations are found.
+    """
+    # Subquery to identify consultations with PLANIFIE appointments
+    planifie_subquery = db.query(models.Appointment.consultation_id).filter(
+        models.Appointment.etat == models.EtatAppointment.PLANIFIE
+    ).subquery()
+
+    # Query consultations with etat=RECONSULTATION and no PLANIFIE appointments
+    consultations = db.query(models.Consultation).filter(
+        models.Consultation.patient_id == current_user.id,
+        models.Consultation.etat == models.EtatConsultation.RECONSULTATION,
+        not_(models.Consultation.id.in_(planifie_subquery))
+    ).all()
+
+    if not consultations:
+        raise HTTPException(status_code=404, detail="No eligible reconsultations found")
+
+    return consultations
 
 @router.get("/{consultation_id}", response_model=Consultation)
 async def get_consultation(
