@@ -1,13 +1,40 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from controllers.consultation_patient_controller import AuthUser
 from dependencies.get_db import get_db
 from dependencies.env import BCRYPT_SALT_ROUNDS
-from dependencies.auth import bcrypt
+from dependencies.auth import RoleChecker, bcrypt
 import models
 from schemas.doctor_schemas import Doctor, DoctorCreate, DoctorUpdate
 from models import RoleUser
 
 router = APIRouter(prefix="/doctors", tags=["Doctors"])
+
+# Dependency to ensure the user is authenticated
+allow_both = RoleChecker([models.RoleUser.PATIENT, models.RoleUser.DOCTOR])
+
+@router.get("/single-doctor", response_model=Doctor)
+def get_single_doctor_endpoint(
+    current_user: AuthUser = Depends(allow_both),
+    db: Session = Depends(get_db)
+):
+    doctor = db.query(models.Doctor).first()
+    if not doctor:
+        raise HTTPException(status_code=404, detail="No doctor found in the system")
+    
+    user = doctor.user
+    
+    return {
+        "id": doctor.id,
+        "email": user.email,
+        "name": user.name,
+        "role": user.role,
+        "adress": user.adress,
+        "birthdate": user.birthdate,
+        "phoneNumber": user.phoneNumber,
+        "description": doctor.description,
+        "rating": doctor.rating
+    }
 
 @router.post("/single-doctor", response_model=Doctor)
 async def create_single_doctor(doctor: DoctorCreate, db: Session = Depends(get_db)):
