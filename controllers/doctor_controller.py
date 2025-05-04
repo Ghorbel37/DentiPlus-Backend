@@ -9,6 +9,60 @@ from models import RoleUser
 
 router = APIRouter(prefix="/doctors", tags=["Doctors"])
 
+@router.post("/single-doctor", response_model=Doctor)
+async def create_single_doctor(doctor: DoctorCreate, db: Session = Depends(get_db)):
+    # Check if any doctor already exists
+    if db.query(models.Doctor).first():
+        raise HTTPException(status_code=400, detail="A doctor already exists in the system")
+
+    # Check if email already exists
+    if db.query(models.User).filter(models.User.email == doctor.email).first():
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    # Hash the password
+    hashed_password = bcrypt.hashpw(doctor.password.encode(), bcrypt.gensalt(BCRYPT_SALT_ROUNDS)).decode()
+
+    # Create User
+    db_user = models.User(
+        email=doctor.email,
+        adress=doctor.adress,
+        birthdate=doctor.birthdate,
+        name=doctor.name,
+        password=hashed_password,
+        phoneNumber=doctor.phoneNumber,
+        role=RoleUser.DOCTOR
+    )
+
+    # Create Doctor
+    db_doctor = models.Doctor(
+        description=doctor.description,
+        rating=doctor.rating
+    )
+
+    db_user.doctor = db_doctor
+    db.add(db_user)
+    
+    try:
+        db.commit()
+        db.refresh(db_user)
+        db.refresh(db_doctor)
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+    # Construct response
+    return {
+        "id": db_doctor.id,
+        "email": db_user.email,
+        "name": db_user.name,
+        "role": db_user.role,
+        "adress": db_user.adress,
+        "birthdate": db_user.birthdate,
+        "phoneNumber": db_user.phoneNumber,
+        "description": db_doctor.description,
+        "rating": db_doctor.rating
+    }
+
 @router.post("/", response_model=Doctor)
 def create_doctor(doctor: DoctorCreate, db: Session = Depends(get_db)):
     # Check if email already exists
