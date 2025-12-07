@@ -8,6 +8,8 @@
 - **MySQL + SQLAlchemy** – Robust database management
 - **Blockchain Integration** – Smart contract interactions
 - **LLM Model Queries** – Connects to an external AI service
+- **Smart Contracts Location** – Smart contracts are stored in the `blockchain_smart_contracts/` folder.
+- **Remote Backend Notebooks** – Colab notebooks for the remote backend are under `colab_remote_backend_notebooks/` (use the `prod` notebook for normal execution).
 
 ## ⚙️ Installation
 
